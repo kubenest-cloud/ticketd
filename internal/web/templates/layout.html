@@ -1,0 +1,66 @@
+{{define "layout"}}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{block "title" .}}TicketD Admin{{end}}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="icon" type="image/png" sizes="32x32" href="/admin/assets/logo-32.png">
+  <link rel="icon" type="image/png" sizes="128x128" href="/admin/assets/logo-128.png">
+  <style>
+    :root { color-scheme: light; }
+    body { background: #f4f6fb; }
+    .ticketd-hero { background: linear-gradient(135deg, #0f172a, #1e293b); }
+    .ticketd-table td { vertical-align: top; }
+    .ticketd-muted { color: #667085; }
+    .ticketd-wrap { white-space: pre-wrap; word-break: break-word; }
+    .ticketd-card { box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); border-radius: 14px; }
+  </style>
+</head>
+<body>
+  <section class="hero is-small ticketd-hero">
+    <div class="hero-body">
+      <div class="container">
+        <div class="columns is-vcentered">
+          <div class="column">
+            <div class="media is-align-items-center">
+              <figure class="media-left">
+                <p class="image is-48x48">
+                  <img src="/admin/assets/logo-64.png" alt="TicketD logo" width="48" height="48">
+                </p>
+              </figure>
+              <div class="media-content">
+                <h1 class="title has-text-white">TicketD Admin</h1>
+                <p class="subtitle has-text-grey-light">Lightweight ticket intake and contact management.</p>
+              </div>
+            </div>
+          </div>
+          <div class="column is-narrow">
+            <div class="tabs is-toggle is-toggle-rounded is-fullwidth">
+              <ul>
+                <li class="{{if eq .Active "submissions"}}is-active{{end}}">
+                  <a href="/admin/submissions">
+                    <span>Submissions</span>
+                  </a>
+                </li>
+                <li class="{{if eq .Active "clients"}}is-active{{end}}">
+                  <a href="/admin/clients">
+                    <span>Clients</span>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="section">
+    <div class="container">
+      {{block "content" .}}{{end}}
+    </div>
+  </section>
+</body>
+</html>
+{{end}}

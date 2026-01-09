@@ -1,0 +1,8 @@
+# Go
+/bin/
+*.exe
+*.out
+
+# TicketD
+ticketd.db
+.env

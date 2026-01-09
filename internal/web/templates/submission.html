@@ -1,0 +1,68 @@
+{{define "title"}}Ticket | TicketD{{end}}
+{{define "content"}}
+<div class="columns is-multiline">
+  <div class="column is-12">
+    <div class="card ticketd-card">
+      <header class="card-header">
+        <p class="card-header-title">Ticket #{{.Submission.ID}}</p>
+        <div class="card-header-icon">
+          <span class="tag {{if eq .Submission.Status "OPEN"}}is-success is-light{{else if eq .Submission.Status "IN PROGRESS"}}is-warning is-light{{else}}is-dark is-light{{end}}">{{.Submission.Status}}</span>
+        </div>
+      </header>
+      <div class="card-content">
+        <div class="columns is-multiline">
+          <div class="column is-6">
+            {{if .Submission.Subject}}
+            <p class="has-text-weight-semibold">{{.Submission.Subject}}</p>
+            {{end}}
+            <p class="ticketd-muted ticketd-wrap">{{.Submission.Message}}</p>
+            {{if .Submission.Priority}}
+            <p class="mt-3"><span class="tag is-warning is-light">Priority: {{.Submission.Priority}}</span></p>
+            {{end}}
+          </div>
+          <div class="column is-6">
+            <div class="content">
+              <p><strong>From:</strong> {{.Submission.Name}} ({{.Submission.Email}})</p>
+              <p><strong>Client:</strong> {{.Submission.Client}}</p>
+              <p><strong>Form:</strong> {{.Submission.Form}} ({{.Submission.FormType}})</p>
+              <p><strong>Received:</strong> {{.CreatedAt}}</p>
+              <p><strong>IP:</strong> {{.Submission.IP}}</p>
+            </div>
+          </div>
+          <div class="column is-12">
+            <div class="columns is-vcentered">
+              <div class="column is-6">
+                <form method="post" action="/admin/submissions/{{.Submission.ID}}/status">
+                  <div class="field is-grouped is-align-items-flex-end">
+                    <div class="control is-expanded">
+                      <label class="label">Status</label>
+                      <div class="select is-fullwidth">
+                        <select name="status">
+                          <option value="OPEN" {{if eq .Submission.Status "OPEN"}}selected{{end}}>OPEN</option>
+                          <option value="IN PROGRESS" {{if eq .Submission.Status "IN PROGRESS"}}selected{{end}}>IN PROGRESS</option>
+                          <option value="CLOSED" {{if eq .Submission.Status "CLOSED"}}selected{{end}}>CLOSED</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="control">
+                      <button class="button is-link is-light" type="submit">Save</button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+              <div class="column is-6 has-text-right">
+                <form method="post" action="/admin/submissions/{{.Submission.ID}}/delete">
+                  <button class="button is-danger is-light" type="submit" onclick="return confirm('Delete this ticket?')">Delete</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="column is-12">
+    <a class="button" href="/admin/submissions">Back to submissions</a>
+  </div>
+</div>
+{{end}}

@@ -1,0 +1,95 @@
+{{define "title"}}Forms | TicketD{{end}}
+{{define "content"}}
+<div class="columns is-multiline">
+  <div class="column is-12">
+    <div class="card ticketd-card">
+      <header class="card-header">
+        <p class="card-header-title">Forms for {{.Client.Name}}</p>
+        <div class="card-header-icon">
+          <span class="tag is-light">{{.Client.AllowedDomain}}</span>
+        </div>
+      </header>
+      <div class="card-content">
+        <form method="post" action="/admin/clients/{{.Client.ID}}/forms">
+          <div class="columns is-multiline">
+            <div class="column is-5">
+              <div class="field">
+                <label class="label" for="form_name">Form name</label>
+                <div class="control">
+                  <input class="input" id="form_name" name="name" placeholder="Support" required>
+                </div>
+              </div>
+            </div>
+            <div class="column is-4">
+              <div class="field">
+                <label class="label" for="form_type">Form type</label>
+                <div class="control">
+                  <div class="select is-fullwidth">
+                    <select id="form_type" name="type">
+                      <option value="support">Support</option>
+                      <option value="contact">Contact</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="column is-3 is-flex is-align-items-flex-end">
+              <div class="field">
+                <div class="control">
+                  <button class="button is-primary" type="submit">Create form</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="column is-12">
+    <div class="card ticketd-card">
+      <header class="card-header">
+        <p class="card-header-title">Embed links</p>
+      </header>
+      <div class="card-content">
+        <div class="table-container">
+          <table class="table is-fullwidth is-striped is-hoverable ticketd-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Embed link</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody>
+            {{range .Forms}}
+              <tr>
+                <td class="has-text-weight-semibold">{{.Name}}</td>
+                <td>
+                  <span class="tag is-rounded {{if eq .Type "support"}}is-danger is-light{{else}}is-info is-light{{end}}">{{.Type}}</span>
+                </td>
+                <td>
+                  <input class="input is-small" value="{{$.BaseURL}}/embed/{{.ID}}.js" readonly>
+                </td>
+                <td>{{.CreatedAt}}</td>
+              </tr>
+            {{else}}
+              <tr>
+                <td colspan="4">No forms yet.</td>
+              </tr>
+            {{end}}
+            </tbody>
+          </table>
+        </div>
+        {{if .BaseURLNote}}
+        <article class="message is-warning is-light">
+          <div class="message-body">
+            {{.BaseURLNote}}
+          </div>
+        </article>
+        {{end}}
+      </div>
+    </div>
+  </div>
+</div>
+{{end}}

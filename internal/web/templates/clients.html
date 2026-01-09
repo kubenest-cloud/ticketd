@@ -1,0 +1,132 @@
+{{define "title"}}Clients | TicketD{{end}} {{define "content"}}
+<div class="columns is-multiline">
+  <div class="column is-12">
+    <div class="card ticketd-card">
+      <header class="card-header">
+        <p class="card-header-title">Create client</p>
+      </header>
+      <div class="card-content">
+        <div class="content ticketd-muted">
+          Create a client per product or website.
+        </div>
+        <form method="post" action="/admin/clients">
+          <div class="columns is-multiline">
+            <div class="column is-6">
+              <div class="field">
+                <label class="label" for="client_name">Client name</label>
+                <div class="control">
+                  <input
+                    class="input"
+                    id="client_name"
+                    name="name"
+                    placeholder="Acme App"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="column is-6">
+              <div class="field">
+                <label class="label" for="client_domain">Allowed domain</label>
+                <div class="control">
+                  <input
+                    class="input"
+                    id="client_domain"
+                    name="allowed_domain"
+                    placeholder="example.com"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="column is-12">
+              <div class="field">
+                <div class="control">
+                  <button class="button is-primary" type="submit">
+                    Create client
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="column is-12">
+    <div class="card ticketd-card">
+      <header class="card-header">
+        <p class="card-header-title">Clients</p>
+      </header>
+      <div class="card-content">
+        <div class="table-container">
+          <table class="table is-fullwidth is-hoverable">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Allowed domain</th>
+                <th>Forms</th>
+                <th></th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{range .Clients}}
+              <tr>
+                <td class="has-text-weight-semibold">{{.Name}}</td>
+                <td>{{.AllowedDomain}}</td>
+                <td>
+                  <a
+                    class="button is-small is-link is-light"
+                    href="/admin/clients/{{.ID}}/forms"
+                    >Manage forms</a
+                  >
+                </td>
+                <td>
+                  <a class="button is-small" href="/admin/clients/{{.ID}}/edit"
+                    >Edit</a
+                  >
+                </td>
+                <td>{{.CreatedAt}}</td>
+              </tr>
+              {{else}}
+              <tr>
+                <td colspan="5">No clients yet.</td>
+              </tr>
+              {{end}}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="column is-12">
+    <nav
+      class="pagination is-centered"
+      role="navigation"
+      aria-label="pagination"
+    >
+      {{if .PrevPage}}
+      <a class="pagination-previous" href="/admin/clients?page={{.PrevPage}}"
+        >Previous</a
+      >
+      {{else}}
+      <a class="pagination-previous" disabled>Previous</a>
+      {{end}} {{if .NextPage}}
+      <a class="pagination-next" href="/admin/clients?page={{.NextPage}}"
+        >Next</a
+      >
+      {{else}}
+      <a class="pagination-next" disabled>Next</a>
+      {{end}}
+      <ul class="pagination-list">
+        <li>
+          <span class="pagination-link is-current"
+            >Page {{.Page}} of {{.TotalPages}}</span
+          >
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div>
+{{end}}

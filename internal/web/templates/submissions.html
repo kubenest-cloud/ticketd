@@ -1,0 +1,88 @@
+{{define "title"}}Submissions | TicketD{{end}}
+{{define "content"}}
+<div class="columns is-multiline">
+  <div class="column is-12">
+    <div class="card ticketd-card">
+      <header class="card-header">
+        <p class="card-header-title">Incoming tickets</p>
+        <div class="card-header-icon">
+          <span class="tag is-light">{{.Total}} total</span>
+        </div>
+      </header>
+      <div class="card-content">
+        <div class="table-container">
+          <table class="table is-fullwidth is-striped is-hoverable ticketd-table">
+            <thead>
+              <tr>
+                <th>Ticket</th>
+                <th>Client</th>
+                <th>Form</th>
+                <th>From</th>
+                <th>Subject</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Received</th>
+              </tr>
+            </thead>
+            <tbody>
+            {{range .Submissions}}
+              <tr>
+                <td>
+                  <a class="has-text-weight-semibold" href="/admin/submissions/{{.ID}}">#{{.ID}}</a>
+                </td>
+                <td>
+                  <div class="has-text-weight-semibold">{{.Client}}</div>
+                  <div class="is-size-7 ticketd-muted">ID {{.ClientID}}</div>
+                </td>
+                <td>
+                  <div>{{.Form}}</div>
+                  <span class="tag is-rounded {{if eq .FormType "support"}}is-danger is-light{{else}}is-info is-light{{end}}">{{.FormType}}</span>
+                </td>
+                <td>
+                  <div class="has-text-weight-semibold">{{.Name}}</div>
+                  <div class="is-size-7 ticketd-muted">{{.Email}}</div>
+                </td>
+                <td>
+                  {{if .Subject}}<div class="has-text-weight-semibold ticketd-wrap">{{.Subject}}</div>{{end}}
+                </td>
+                <td>
+                  <span class="tag {{if eq .Status "OPEN"}}is-success is-light{{else if eq .Status "IN PROGRESS"}}is-warning is-light{{else}}is-dark is-light{{end}}">{{.Status}}</span>
+                </td>
+                <td>
+                  {{if .Priority}}<span class="tag is-warning is-light">{{.Priority}}</span>{{end}}
+                </td>
+                <td>
+                  <div>{{.CreatedAt}}</div>
+                  <div class="is-size-7 ticketd-muted">{{.IP}}</div>
+                </td>
+              </tr>
+            {{else}}
+              <tr>
+                <td colspan="8">No submissions yet.</td>
+              </tr>
+            {{end}}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="column is-12">
+    <nav class="pagination is-centered" role="navigation" aria-label="pagination">
+      {{if .PrevPage}}
+      <a class="pagination-previous" href="/admin/submissions?page={{.PrevPage}}">Previous</a>
+      {{else}}
+      <a class="pagination-previous" disabled>Previous</a>
+      {{end}}
+      {{if .NextPage}}
+      <a class="pagination-next" href="/admin/submissions?page={{.NextPage}}">Next</a>
+      {{else}}
+      <a class="pagination-next" disabled>Next</a>
+      {{end}}
+      <ul class="pagination-list">
+        <li><span class="pagination-link is-current">Page {{.Page}} of {{.TotalPages}}</span></li>
+      </ul>
+    </nav>
+  </div>
+</div>
+{{end}}

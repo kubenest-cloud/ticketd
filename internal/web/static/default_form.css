@@ -1,0 +1,8 @@
+.ticketd-form { font-family: "Segoe UI", Tahoma, Arial, sans-serif; max-width: 420px; background: #fff; border-radius: 14px; padding: 18px 20px; box-shadow: 0 6px 18px rgba(15,23,42,0.08); border: 1px solid #e2e8f0; }
+.ticketd-form h3 { margin: 0 0 12px 0; font-size: 18px; color: #0f172a; }
+.ticketd-form label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: #475569; margin-bottom: 6px; }
+.ticketd-form input, .ticketd-form select, .ticketd-form textarea { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #cbd5f5; font-size: 14px; margin-bottom: 12px; }
+.ticketd-form button { width: 100%; padding: 10px 12px; border: none; border-radius: 8px; background: #2563eb; color: #fff; font-size: 14px; cursor: pointer; }
+.ticketd-form .ticketd-status { margin-top: 10px; font-size: 13px; color: #0f172a; }
+.ticketd-form .ticketd-error { color: #b91c1c; }
+.ticketd-form .ticketd-success { color: #15803d; }
