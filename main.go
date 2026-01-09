@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -13,34 +13,63 @@ import (
 )
 
 func main() {
+	// Set up structured logging
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+	slog.SetDefault(logger)
+
+	slog.Info("Starting TicketD")
+
+	// Load .env file if present (development only)
 	if _, err := os.Stat(".env"); err == nil {
 		if err := godotenv.Load(); err != nil {
-			log.Fatalf("failed to load .env: %v", err)
+			slog.Error("Failed to load .env file", "error", err)
+			os.Exit(1)
 		}
-	}
-	cfg := config.Load()
-	if cfg.AdminUser == "" || cfg.AdminPass == "" {
-		log.Fatal("TICKETD_ADMIN_USER and TICKETD_ADMIN_PASS must be set")
+		slog.Info("Loaded configuration from .env file")
 	}
 
+	// Load and validate configuration
+	cfg := config.Load()
+	if err := cfg.Validate(); err != nil {
+		slog.Error("Configuration validation failed", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("Configuration loaded successfully", "config", cfg.String())
+
+	// Initialize database
 	store, err := sqlite.New(cfg.DBPath)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("Failed to initialize database", "error", err, "db_path", cfg.DBPath)
+		os.Exit(1)
 	}
-	defer store.Close()
+	defer func() {
+		if err := store.Close(); err != nil {
+			slog.Error("Failed to close database", "error", err)
+		}
+	}()
+	slog.Info("Database initialized", "db_path", cfg.DBPath)
 
+	// Run database migrations
 	if err := store.Migrate(); err != nil {
-		log.Fatal(err)
+		slog.Error("Database migration failed", "error", err)
+		os.Exit(1)
 	}
+	slog.Info("Database migrations completed")
 
+	// Initialize web application
 	app, err := web.NewApp(cfg, store)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("Failed to initialize web application", "error", err)
+		os.Exit(1)
 	}
 
+	// Start HTTP server
 	addr := ":" + cfg.Port
-	log.Printf("TicketD listening on %s", addr)
+	slog.Info("Starting HTTP server", "address", addr)
 	if err := http.ListenAndServe(addr, app.Router()); err != nil {
-		log.Fatal(err)
+		slog.Error("HTTP server failed", "error", err, "address", addr)
+		os.Exit(1)
 	}
 }

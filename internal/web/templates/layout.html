@@ -16,9 +16,63 @@
     .ticketd-muted { color: #667085; }
     .ticketd-wrap { white-space: pre-wrap; word-break: break-word; }
     .ticketd-card { box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); border-radius: 14px; }
+
+    /* Success/error message styles */
+    .ticketd-flash {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      min-width: 300px;
+      max-width: 500px;
+      animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Copy button styles */
+    .ticketd-copy-btn {
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .ticketd-copy-btn:hover {
+      transform: scale(1.05);
+    }
+
+    /* Loading state */
+    .is-loading {
+      position: relative;
+      pointer-events: none;
+      opacity: 0.6;
+    }
+    .is-loading::after {
+      animation: spinAround 0.5s infinite linear;
+      border: 2px solid #dbdbdb;
+      border-radius: 290486px;
+      border-right-color: transparent;
+      border-top-color: transparent;
+      content: "";
+      display: block;
+      height: 1em;
+      width: 1em;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      margin-left: -0.5em;
+      margin-top: -0.5em;
+    }
+    @keyframes spinAround {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(359deg); }
+    }
   </style>
 </head>
 <body>
+  <!-- Flash messages container -->
+  <div id="flash-container" aria-live="polite" aria-atomic="true"></div>
+
   <section class="hero is-small ticketd-hero">
     <div class="hero-body">
       <div class="container">
@@ -37,30 +91,87 @@
             </div>
           </div>
           <div class="column is-narrow">
-            <div class="tabs is-toggle is-toggle-rounded is-fullwidth">
+            <nav class="tabs is-toggle is-toggle-rounded is-fullwidth" role="navigation" aria-label="Main navigation">
               <ul>
                 <li class="{{if eq .Active "submissions"}}is-active{{end}}">
-                  <a href="/admin/submissions">
+                  <a href="/admin/submissions" {{if eq .Active "submissions"}}aria-current="page"{{end}}>
                     <span>Submissions</span>
                   </a>
                 </li>
                 <li class="{{if eq .Active "clients"}}is-active{{end}}">
-                  <a href="/admin/clients">
+                  <a href="/admin/clients" {{if eq .Active "clients"}}aria-current="page"{{end}}>
                     <span>Clients</span>
                   </a>
                 </li>
               </ul>
-            </div>
+            </nav>
           </div>
         </div>
       </div>
     </div>
   </section>
+
   <section class="section">
     <div class="container">
       {{block "content" .}}{{end}}
     </div>
   </section>
+
+  <script>
+    // Copy to clipboard functionality
+    function copyToClipboard(text, button) {
+      navigator.clipboard.writeText(text).then(() => {
+        showFlash('Copied to clipboard!', 'success');
+        if (button) {
+          const originalText = button.textContent;
+          button.textContent = '✓ Copied';
+          setTimeout(() => {
+            button.textContent = originalText;
+          }, 2000);
+        }
+      }).catch(err => {
+        showFlash('Failed to copy to clipboard', 'danger');
+      });
+    }
+
+    // Show flash messages
+    function showFlash(message, type = 'info') {
+      const container = document.getElementById('flash-container');
+      const flash = document.createElement('div');
+      flash.className = `notification is-${type} ticketd-flash`;
+      flash.innerHTML = `
+        <button class="delete" onclick="this.parentElement.remove()"></button>
+        ${message}
+      `;
+      container.appendChild(flash);
+
+      setTimeout(() => {
+        flash.remove();
+      }, 5000);
+    }
+
+    // Add loading state to forms
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', (e) => {
+          const submitBtn = form.querySelector('button[type="submit"]');
+          if (submitBtn && !form.classList.contains('no-loading')) {
+            submitBtn.classList.add('is-loading');
+          }
+        });
+      });
+    });
+
+    // Confirm deletions
+    document.querySelectorAll('[data-confirm]').forEach(el => {
+      el.addEventListener('click', (e) => {
+        if (!confirm(el.dataset.confirm)) {
+          e.preventDefault();
+          return false;
+        }
+      });
+    });
+  </script>
 </body>
 </html>
 {{end}}

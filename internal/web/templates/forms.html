@@ -1,6 +1,7 @@
 {{define "title"}}Forms | TicketD{{end}}
 {{define "content"}}
 <div class="columns is-multiline">
+  <!-- Create Form Card -->
   <div class="column is-12">
     <div class="card ticketd-card">
       <header class="card-header">
@@ -10,33 +11,51 @@
         </div>
       </header>
       <div class="card-content">
-        <form method="post" action="/admin/clients/{{.Client.ID}}/forms">
+        <form method="post" action="/admin/clients/{{.Client.ID}}/forms" aria-labelledby="create-form-title">
+          <h2 id="create-form-title" class="is-sr-only">Create new form</h2>
           <div class="columns is-multiline">
             <div class="column is-5">
               <div class="field">
-                <label class="label" for="form_name">Form name</label>
+                <label class="label" for="form_name">
+                  Form name
+                  <span class="has-text-danger" aria-label="required">*</span>
+                </label>
                 <div class="control">
-                  <input class="input" id="form_name" name="name" placeholder="Support" required>
+                  <input
+                    class="input"
+                    id="form_name"
+                    name="name"
+                    placeholder="Support"
+                    required
+                    aria-required="true"
+                    aria-describedby="form-name-help">
                 </div>
+                <p class="help" id="form-name-help">A descriptive name for this form</p>
               </div>
             </div>
             <div class="column is-4">
               <div class="field">
-                <label class="label" for="form_type">Form type</label>
+                <label class="label" for="form_type">
+                  Form type
+                  <span class="has-text-danger" aria-label="required">*</span>
+                </label>
                 <div class="control">
                   <div class="select is-fullwidth">
-                    <select id="form_type" name="type">
-                      <option value="support">Support</option>
-                      <option value="contact">Contact</option>
+                    <select id="form_type" name="type" aria-describedby="form-type-help">
+                      <option value="support">Support (with priority & subject)</option>
+                      <option value="contact">Contact (basic)</option>
                     </select>
                   </div>
                 </div>
+                <p class="help" id="form-type-help">Choose the type of form fields to include</p>
               </div>
             </div>
             <div class="column is-3 is-flex is-align-items-flex-end">
               <div class="field">
                 <div class="control">
-                  <button class="button is-primary" type="submit">Create form</button>
+                  <button class="button is-primary" type="submit">
+                    <span>Create form</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -45,12 +64,18 @@
       </div>
     </div>
   </div>
+
+  <!-- Embed Links Card -->
   <div class="column is-12">
     <div class="card ticketd-card">
       <header class="card-header">
         <p class="card-header-title">Embed links</p>
+        <div class="card-header-icon">
+          <span class="tag is-info is-light">{{len .Forms}} form{{if ne (len .Forms) 1}}s{{end}}</span>
+        </div>
       </header>
       <div class="card-content">
+        {{if .Forms}}
         <div class="table-container">
           <table class="table is-fullwidth is-striped is-hoverable ticketd-table">
             <thead>
@@ -66,30 +91,63 @@
               <tr>
                 <td class="has-text-weight-semibold">{{.Name}}</td>
                 <td>
-                  <span class="tag is-rounded {{if eq .Type "support"}}is-danger is-light{{else}}is-info is-light{{end}}">{{.Type}}</span>
+                  <span class="tag is-rounded {{if eq .Type "support"}}is-danger is-light{{else}}is-info is-light{{end}}">
+                    {{if eq .Type "support"}}Support{{else}}Contact{{end}}
+                  </span>
                 </td>
                 <td>
-                  <input class="input is-small" value="{{$.BaseURL}}/embed/{{.ID}}.js" readonly>
+                  <div class="field has-addons">
+                    <div class="control is-expanded">
+                      <input
+                        class="input is-small is-family-monospace"
+                        value="<script src=&quot;{{$.BaseURL}}/embed/{{.ID}}.js&quot;></script>"
+                        readonly
+                        id="embed-{{.ID}}"
+                        aria-label="Embed code for {{.Name}}">
+                    </div>
+                    <div class="control">
+                      <button
+                        class="button is-small is-info is-light ticketd-copy-btn"
+                        type="button"
+                        onclick="copyToClipboard(document.getElementById('embed-{{.ID}}').value, this)"
+                        aria-label="Copy embed code for {{.Name}}">
+                        Copy
+                      </button>
+                    </div>
+                  </div>
                 </td>
-                <td>{{.CreatedAt}}</td>
-              </tr>
-            {{else}}
-              <tr>
-                <td colspan="4">No forms yet.</td>
+                <td>
+                  <time datetime="{{.CreatedAt}}">{{.CreatedAt}}</time>
+                </td>
               </tr>
             {{end}}
             </tbody>
           </table>
         </div>
+        {{else}}
+        <div class="notification is-light">
+          <p class="has-text-centered ticketd-muted">
+            No forms created yet. Create your first form above to get started.
+          </p>
+        </div>
+        {{end}}
+
         {{if .BaseURLNote}}
-        <article class="message is-warning is-light">
+        <article class="message is-warning is-light mt-4">
           <div class="message-body">
-            {{.BaseURLNote}}
+            <strong>⚠️ Configuration Note:</strong> {{.BaseURLNote}}
           </div>
         </article>
         {{end}}
       </div>
     </div>
+  </div>
+
+  <!-- Back Button -->
+  <div class="column is-12">
+    <a class="button" href="/admin/clients">
+      <span>← Back to clients</span>
+    </a>
   </div>
 </div>
 {{end}}

@@ -1,58 +1,127 @@
-{{define "title"}}Ticket | TicketD{{end}}
+{{define "title"}}Ticket #{{.Submission.ID}} | TicketD{{end}}
 {{define "content"}}
 <div class="columns is-multiline">
+  <!-- Ticket Details Card -->
   <div class="column is-12">
     <div class="card ticketd-card">
       <header class="card-header">
         <p class="card-header-title">Ticket #{{.Submission.ID}}</p>
         <div class="card-header-icon">
-          <span class="tag {{if eq .Submission.Status "OPEN"}}is-success is-light{{else if eq .Submission.Status "IN PROGRESS"}}is-warning is-light{{else}}is-dark is-light{{end}}">{{.Submission.Status}}</span>
+          <span class="tag {{if eq .Submission.Status "OPEN"}}is-success is-light{{else if eq .Submission.Status "IN_PROGRESS"}}is-warning is-light{{else}}is-dark is-light{{end}}">
+            {{if eq .Submission.Status "IN_PROGRESS"}}IN PROGRESS{{else}}{{.Submission.Status}}{{end}}
+          </span>
         </div>
       </header>
       <div class="card-content">
         <div class="columns is-multiline">
-          <div class="column is-6">
-            {{if .Submission.Subject}}
-            <p class="has-text-weight-semibold">{{.Submission.Subject}}</p>
-            {{end}}
-            <p class="ticketd-muted ticketd-wrap">{{.Submission.Message}}</p>
-            {{if .Submission.Priority}}
-            <p class="mt-3"><span class="tag is-warning is-light">Priority: {{.Submission.Priority}}</span></p>
-            {{end}}
-          </div>
+          <!-- Message Content -->
           <div class="column is-6">
             <div class="content">
-              <p><strong>From:</strong> {{.Submission.Name}} ({{.Submission.Email}})</p>
-              <p><strong>Client:</strong> {{.Submission.Client}}</p>
-              <p><strong>Form:</strong> {{.Submission.Form}} ({{.Submission.FormType}})</p>
-              <p><strong>Received:</strong> {{.CreatedAt}}</p>
-              <p><strong>IP:</strong> {{.Submission.IP}}</p>
+              {{if .Submission.Subject}}
+              <h3 class="title is-5">{{.Submission.Subject}}</h3>
+              {{end}}
+              <div class="box has-background-light">
+                <p class="ticketd-wrap">{{.Submission.Message}}</p>
+              </div>
+              {{if .Submission.Priority}}
+              <p class="mt-3">
+                <span class="tag {{if eq .Submission.Priority "high"}}is-danger{{else if eq .Submission.Priority "medium"}}is-warning{{else}}is-info{{end}}">
+                  Priority: {{.Submission.Priority}}
+                </span>
+              </p>
+              {{end}}
             </div>
           </div>
+
+          <!-- Metadata -->
+          <div class="column is-6">
+            <div class="content">
+              <table class="table is-fullwidth">
+                <tbody>
+                  <tr>
+                    <th>From:</th>
+                    <td>
+                      {{if .Submission.Name}}
+                        <strong>{{.Submission.Name}}</strong><br>
+                      {{end}}
+                      {{if .Submission.Email}}
+                        <a href="mailto:{{.Submission.Email}}">{{.Submission.Email}}</a>
+                      {{else}}
+                        <span class="has-text-grey-light">No email provided</span>
+                      {{end}}
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Client:</th>
+                    <td>{{.Submission.Client}} <span class="tag is-light is-small">ID {{.Submission.ClientID}}</span></td>
+                  </tr>
+                  <tr>
+                    <th>Form:</th>
+                    <td>
+                      {{.Submission.Form}}
+                      <span class="tag is-rounded {{if eq .Submission.FormType "support"}}is-danger is-light{{else}}is-info is-light{{end}}">
+                        {{.Submission.FormType}}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Received:</th>
+                    <td><time datetime="{{.CreatedAt}}">{{.CreatedAt}}</time></td>
+                  </tr>
+                  <tr>
+                    <th>IP Address:</th>
+                    <td><code>{{.Submission.IP}}</code></td>
+                  </tr>
+                  {{if .Submission.UserAgent}}
+                  <tr>
+                    <th>User Agent:</th>
+                    <td><small class="ticketd-muted">{{.Submission.UserAgent}}</small></td>
+                  </tr>
+                  {{end}}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Actions -->
           <div class="column is-12">
+            <hr>
             <div class="columns is-vcentered">
+              <!-- Update Status Form -->
               <div class="column is-6">
-                <form method="post" action="/admin/submissions/{{.Submission.ID}}/status">
+                <form method="post" action="/admin/submissions/{{.Submission.ID}}/status" aria-labelledby="status-form-title">
+                  <h3 id="status-form-title" class="is-sr-only">Update ticket status</h3>
                   <div class="field is-grouped is-align-items-flex-end">
                     <div class="control is-expanded">
-                      <label class="label">Status</label>
+                      <label class="label" for="status-select">Status</label>
                       <div class="select is-fullwidth">
-                        <select name="status">
-                          <option value="OPEN" {{if eq .Submission.Status "OPEN"}}selected{{end}}>OPEN</option>
-                          <option value="IN PROGRESS" {{if eq .Submission.Status "IN PROGRESS"}}selected{{end}}>IN PROGRESS</option>
-                          <option value="CLOSED" {{if eq .Submission.Status "CLOSED"}}selected{{end}}>CLOSED</option>
+                        <select name="status" id="status-select" aria-describedby="status-help">
+                          <option value="OPEN" {{if eq .Submission.Status "OPEN"}}selected{{end}}>Open</option>
+                          <option value="IN_PROGRESS" {{if eq .Submission.Status "IN_PROGRESS"}}selected{{end}}>In Progress</option>
+                          <option value="CLOSED" {{if eq .Submission.Status "CLOSED"}}selected{{end}}>Closed</option>
                         </select>
                       </div>
+                      <p class="help" id="status-help">Update the ticket status</p>
                     </div>
                     <div class="control">
-                      <button class="button is-link is-light" type="submit">Save</button>
+                      <button class="button is-link is-light" type="submit">
+                        <span>Save Status</span>
+                      </button>
                     </div>
                   </div>
                 </form>
               </div>
+
+              <!-- Delete Form -->
               <div class="column is-6 has-text-right">
-                <form method="post" action="/admin/submissions/{{.Submission.ID}}/delete">
-                  <button class="button is-danger is-light" type="submit" onclick="return confirm('Delete this ticket?')">Delete</button>
+                <form method="post" action="/admin/submissions/{{.Submission.ID}}/delete" class="no-loading" aria-labelledby="delete-form-title">
+                  <h3 id="delete-form-title" class="is-sr-only">Delete ticket</h3>
+                  <button
+                    class="button is-danger is-light"
+                    type="submit"
+                    data-confirm="Are you sure you want to permanently delete ticket #{{.Submission.ID}}? This action cannot be undone.">
+                    <span>Delete Ticket</span>
+                  </button>
                 </form>
               </div>
             </div>
@@ -61,8 +130,12 @@
       </div>
     </div>
   </div>
+
+  <!-- Back Button -->
   <div class="column is-12">
-    <a class="button" href="/admin/submissions">Back to submissions</a>
+    <a class="button" href="/admin/submissions">
+      <span>← Back to all submissions</span>
+    </a>
   </div>
 </div>
 {{end}}

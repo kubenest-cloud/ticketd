@@ -1,37 +1,49 @@
+// Package sqlite implements the Store interface using SQLite as the database.
+// It provides persistent storage for clients, forms, and submissions.
 package sqlite
 
 import (
 	"database/sql"
-	"errors"
-	"fmt"
 	"strings"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 
+	apperrors "ticketd/internal/errors"
 	"ticketd/internal/store"
+	"ticketd/internal/validator"
 )
 
+// Store implements the store.Store interface using SQLite.
 type Store struct {
 	db *sql.DB
 }
 
+// New creates a new SQLite store at the specified path.
+// It opens the database connection and verifies connectivity.
 func New(path string) (*Store, error) {
 	db, err := sql.Open("sqlite3", path)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.Wrap(err, "failed to open database")
 	}
 	if err := db.Ping(); err != nil {
-		return nil, err
+		return nil, apperrors.Wrap(err, "failed to connect to database")
 	}
 	return &Store{db: db}, nil
 }
 
+// Close closes the database connection.
 func (s *Store) Close() error {
-	return s.db.Close()
+	if err := s.db.Close(); err != nil {
+		return apperrors.Wrap(err, "failed to close database")
+	}
+	return nil
 }
 
+// Migrate runs database migrations to create or update the schema.
+// It creates the necessary tables if they don't exist.
 func (s *Store) Migrate() error {
+	// Create tables with IF NOT EXISTS to make migrations idempotent
 	_, err := s.db.Exec(`
 CREATE TABLE IF NOT EXISTS clients (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,134 +79,225 @@ CREATE TABLE IF NOT EXISTS submissions (
 );
 `)
 	if err != nil {
-		return err
+		return apperrors.Wrap(err, "failed to run database migrations")
 	}
+
+	// Note: The status column was added in a migration.
+	// Since we're using CREATE TABLE IF NOT EXISTS, existing tables
+	// already have the status column. This ALTER TABLE is kept for
+	// backwards compatibility but will fail silently on existing tables.
 	_, err = s.db.Exec(`ALTER TABLE submissions ADD COLUMN status TEXT NOT NULL DEFAULT 'OPEN'`)
 	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
-		return err
+		return apperrors.Wrap(err, "failed to add status column")
 	}
+
 	return nil
 }
 
+// CreateClient creates a new client after validating the input.
 func (s *Store) CreateClient(name, allowedDomain string) (store.Client, error) {
+	// Validate and trim input
+	name, allowedDomain, err := validator.TrimAndValidateClient(name, allowedDomain)
+	if err != nil {
+		return store.Client{}, err
+	}
+
 	result, err := s.db.Exec(`INSERT INTO clients (name, allowed_domain) VALUES (?, ?)`, name, allowedDomain)
 	if err != nil {
-		return store.Client{}, err
+		return store.Client{}, apperrors.Wrap(err, "failed to create client")
 	}
+
 	id, err := result.LastInsertId()
 	if err != nil {
-		return store.Client{}, err
+		return store.Client{}, apperrors.Wrap(err, "failed to get client ID")
 	}
+
 	return s.GetClient(id)
 }
 
+// ListClients returns a paginated list of clients ordered by creation date (newest first).
 func (s *Store) ListClients(offset, limit int) ([]store.Client, int, error) {
+	// Apply default pagination limits
+	limit = formatLimit(limit)
+	offset = formatOffset(offset)
+
 	var total int
 	if err := s.db.QueryRow(`SELECT COUNT(*) FROM clients`).Scan(&total); err != nil {
-		return nil, 0, err
+		return nil, 0, apperrors.Wrap(err, "failed to count clients")
 	}
+
 	rows, err := s.db.Query(`SELECT id, name, allowed_domain, created_at FROM clients ORDER BY created_at DESC LIMIT ? OFFSET ?`, limit, offset)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, apperrors.Wrap(err, "failed to list clients")
 	}
 	defer rows.Close()
 
 	clients := []store.Client{}
 	for rows.Next() {
-		var c store.Client
+		var client store.Client
 		var created string
-		if err := rows.Scan(&c.ID, &c.Name, &c.AllowedDomain, &created); err != nil {
-			return nil, 0, err
+		if err := rows.Scan(&client.ID, &client.Name, &client.AllowedDomain, &created); err != nil {
+			return nil, 0, apperrors.Wrap(err, "failed to scan client row")
 		}
-		c.CreatedAt = parseTime(created)
-		clients = append(clients, c)
+		client.CreatedAt = parseTime(created)
+		clients = append(clients, client)
 	}
-	return clients, total, rows.Err()
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, apperrors.Wrap(err, "error iterating client rows")
+	}
+
+	return clients, total, nil
 }
 
+// GetClient retrieves a client by ID.
 func (s *Store) GetClient(id int64) (store.Client, error) {
-	var c store.Client
+	var client store.Client
 	var created string
 	row := s.db.QueryRow(`SELECT id, name, allowed_domain, created_at FROM clients WHERE id = ?`, id)
-	if err := row.Scan(&c.ID, &c.Name, &c.AllowedDomain, &created); err != nil {
-		return store.Client{}, err
+	if err := row.Scan(&client.ID, &client.Name, &client.AllowedDomain, &created); err != nil {
+		if err == sql.ErrNoRows {
+			return store.Client{}, apperrors.NotFoundError("client", id)
+		}
+		return store.Client{}, apperrors.Wrapf(err, "failed to get client %d", id)
 	}
-	c.CreatedAt = parseTime(created)
-	return c, nil
+	client.CreatedAt = parseTime(created)
+	return client, nil
 }
 
+// UpdateClient updates an existing client's name and allowed domain.
 func (s *Store) UpdateClient(id int64, name, allowedDomain string) error {
-	_, err := s.db.Exec(`UPDATE clients SET name = ?, allowed_domain = ? WHERE id = ?`, name, allowedDomain, id)
-	return err
+	// Validate and trim input
+	name, allowedDomain, err := validator.TrimAndValidateClient(name, allowedDomain)
+	if err != nil {
+		return err
+	}
+
+	result, err := s.db.Exec(`UPDATE clients SET name = ?, allowed_domain = ? WHERE id = ?`, name, allowedDomain, id)
+	if err != nil {
+		return apperrors.Wrapf(err, "failed to update client %d", id)
+	}
+
+	// Check if any rows were affected
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return apperrors.Wrap(err, "failed to check rows affected")
+	}
+	if rowsAffected == 0 {
+		return apperrors.NotFoundError("client", id)
+	}
+
+	return nil
 }
 
+// CreateForm creates a new form after validating the input.
 func (s *Store) CreateForm(clientID int64, name string, formType store.FormType) (store.Form, error) {
+	// Validate input
+	name = strings.TrimSpace(name)
+	if err := validator.ValidateForm(name, formType); err != nil {
+		return store.Form{}, err
+	}
+
+	// Verify client exists
+	if _, err := s.GetClient(clientID); err != nil {
+		return store.Form{}, apperrors.Wrapf(err, "client %d not found", clientID)
+	}
+
 	result, err := s.db.Exec(`INSERT INTO forms (client_id, name, type) VALUES (?, ?, ?)`, clientID, name, string(formType))
 	if err != nil {
-		return store.Form{}, err
+		return store.Form{}, apperrors.Wrap(err, "failed to create form")
 	}
+
 	id, err := result.LastInsertId()
 	if err != nil {
-		return store.Form{}, err
+		return store.Form{}, apperrors.Wrap(err, "failed to get form ID")
 	}
+
 	return s.GetForm(id)
 }
 
+// ListForms returns all forms for a client ordered by creation date (newest first).
 func (s *Store) ListForms(clientID int64) ([]store.Form, error) {
 	rows, err := s.db.Query(`SELECT id, client_id, name, type, created_at FROM forms WHERE client_id = ? ORDER BY created_at DESC`, clientID)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.Wrapf(err, "failed to list forms for client %d", clientID)
 	}
 	defer rows.Close()
 
 	forms := []store.Form{}
 	for rows.Next() {
-		var f store.Form
+		var form store.Form
 		var created string
-		if err := rows.Scan(&f.ID, &f.ClientID, &f.Name, &f.Type, &created); err != nil {
-			return nil, err
+		if err := rows.Scan(&form.ID, &form.ClientID, &form.Name, &form.Type, &created); err != nil {
+			return nil, apperrors.Wrap(err, "failed to scan form row")
 		}
-		f.CreatedAt = parseTime(created)
-		forms = append(forms, f)
+		form.CreatedAt = parseTime(created)
+		forms = append(forms, form)
 	}
-	return forms, rows.Err()
+
+	if err := rows.Err(); err != nil {
+		return nil, apperrors.Wrap(err, "error iterating form rows")
+	}
+
+	return forms, nil
 }
 
+// GetForm retrieves a form by ID.
 func (s *Store) GetForm(id int64) (store.Form, error) {
-	var f store.Form
+	var form store.Form
 	var created string
 	row := s.db.QueryRow(`SELECT id, client_id, name, type, created_at FROM forms WHERE id = ?`, id)
-	if err := row.Scan(&f.ID, &f.ClientID, &f.Name, &f.Type, &created); err != nil {
-		return store.Form{}, err
+	if err := row.Scan(&form.ID, &form.ClientID, &form.Name, &form.Type, &created); err != nil {
+		if err == sql.ErrNoRows {
+			return store.Form{}, apperrors.NotFoundError("form", id)
+		}
+		return store.Form{}, apperrors.Wrapf(err, "failed to get form %d", id)
 	}
-	f.CreatedAt = parseTime(created)
-	return f, nil
+	form.CreatedAt = parseTime(created)
+	return form, nil
 }
 
+// CreateSubmission creates a new submission after validating the input.
 func (s *Store) CreateSubmission(formID int64, input store.SubmissionInput) (store.Submission, error) {
-	form, err := s.GetForm(formID)
-	if err != nil {
+	// Trim and validate input
+	input = validator.TrimSubmissionInput(input)
+	if err := validator.ValidateSubmission(input); err != nil {
 		return store.Submission{}, err
 	}
+
+	// Verify form exists and get client ID
+	form, err := s.GetForm(formID)
+	if err != nil {
+		return store.Submission{}, apperrors.Wrapf(err, "form %d not found", formID)
+	}
+
 	result, err := s.db.Exec(`
 INSERT INTO submissions (client_id, form_id, status, name, email, subject, message, priority, ip, user_agent)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-`, form.ClientID, form.ID, "OPEN", input.Name, input.Email, input.Subject, input.Message, input.Priority, input.IP, input.UserAgent)
+`, form.ClientID, form.ID, validator.StatusOpen, input.Name, input.Email, input.Subject, input.Message, input.Priority, input.IP, input.UserAgent)
 	if err != nil {
-		return store.Submission{}, err
+		return store.Submission{}, apperrors.Wrap(err, "failed to create submission")
 	}
+
 	id, err := result.LastInsertId()
 	if err != nil {
-		return store.Submission{}, err
+		return store.Submission{}, apperrors.Wrap(err, "failed to get submission ID")
 	}
+
 	return s.GetSubmission(id)
 }
 
+// ListSubmissions returns a paginated list of submissions with denormalized client and form data.
 func (s *Store) ListSubmissions(offset, limit int) ([]store.Submission, int, error) {
+	// Apply default pagination limits
+	limit = formatLimit(limit)
+	offset = formatOffset(offset)
+
 	var total int
 	if err := s.db.QueryRow(`SELECT COUNT(*) FROM submissions`).Scan(&total); err != nil {
-		return nil, 0, err
+		return nil, 0, apperrors.Wrap(err, "failed to count submissions")
 	}
+
 	rows, err := s.db.Query(`
 SELECT s.id, s.client_id, c.name, s.form_id, f.name, f.type, s.status, s.name, s.email, s.subject, s.message, s.priority, s.ip, s.user_agent, s.created_at
 FROM submissions s
@@ -204,23 +307,29 @@ ORDER BY s.created_at DESC
 LIMIT ? OFFSET ?
 `, limit, offset)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, apperrors.Wrap(err, "failed to list submissions")
 	}
 	defer rows.Close()
 
-	subs := []store.Submission{}
+	submissions := []store.Submission{}
 	for rows.Next() {
-		var sub store.Submission
+		var submission store.Submission
 		var created string
-		if err := rows.Scan(&sub.ID, &sub.ClientID, &sub.Client, &sub.FormID, &sub.Form, &sub.FormType, &sub.Status, &sub.Name, &sub.Email, &sub.Subject, &sub.Message, &sub.Priority, &sub.IP, &sub.UserAgent, &created); err != nil {
-			return nil, 0, err
+		if err := rows.Scan(&submission.ID, &submission.ClientID, &submission.Client, &submission.FormID, &submission.Form, &submission.FormType, &submission.Status, &submission.Name, &submission.Email, &submission.Subject, &submission.Message, &submission.Priority, &submission.IP, &submission.UserAgent, &created); err != nil {
+			return nil, 0, apperrors.Wrap(err, "failed to scan submission row")
 		}
-		sub.CreatedAt = parseTime(created)
-		subs = append(subs, sub)
+		submission.CreatedAt = parseTime(created)
+		submissions = append(submissions, submission)
 	}
-	return subs, total, rows.Err()
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, apperrors.Wrap(err, "error iterating submission rows")
+	}
+
+	return submissions, total, nil
 }
 
+// GetSubmission retrieves a submission by ID with denormalized client and form data.
 func (s *Store) GetSubmission(id int64) (store.Submission, error) {
 	row := s.db.QueryRow(`
 SELECT s.id, s.client_id, c.name, s.form_id, f.name, f.type, s.status, s.name, s.email, s.subject, s.message, s.priority, s.ip, s.user_agent, s.created_at
@@ -230,82 +339,101 @@ JOIN forms f ON f.id = s.form_id
 WHERE s.id = ?
 `, id)
 
-	var sub store.Submission
+	var submission store.Submission
 	var created string
-	if err := row.Scan(&sub.ID, &sub.ClientID, &sub.Client, &sub.FormID, &sub.Form, &sub.FormType, &sub.Status, &sub.Name, &sub.Email, &sub.Subject, &sub.Message, &sub.Priority, &sub.IP, &sub.UserAgent, &created); err != nil {
-		return store.Submission{}, err
+	if err := row.Scan(&submission.ID, &submission.ClientID, &submission.Client, &submission.FormID, &submission.Form, &submission.FormType, &submission.Status, &submission.Name, &submission.Email, &submission.Subject, &submission.Message, &submission.Priority, &submission.IP, &submission.UserAgent, &created); err != nil {
+		if err == sql.ErrNoRows {
+			return store.Submission{}, apperrors.NotFoundError("submission", id)
+		}
+		return store.Submission{}, apperrors.Wrapf(err, "failed to get submission %d", id)
 	}
-	sub.CreatedAt = parseTime(created)
-	return sub, nil
+	submission.CreatedAt = parseTime(created)
+	return submission, nil
 }
 
+// UpdateSubmissionStatus updates the status of a submission after validating it.
 func (s *Store) UpdateSubmissionStatus(id int64, status string) error {
-	_, err := s.db.Exec(`UPDATE submissions SET status = ? WHERE id = ?`, status, id)
-	return err
+	// Validate status
+	status = strings.TrimSpace(status)
+	if err := validator.ValidateStatus(status); err != nil {
+		return err
+	}
+
+	result, err := s.db.Exec(`UPDATE submissions SET status = ? WHERE id = ?`, status, id)
+	if err != nil {
+		return apperrors.Wrapf(err, "failed to update submission %d status", id)
+	}
+
+	// Check if any rows were affected
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return apperrors.Wrap(err, "failed to check rows affected")
+	}
+	if rowsAffected == 0 {
+		return apperrors.NotFoundError("submission", id)
+	}
+
+	return nil
 }
 
+// DeleteSubmission permanently deletes a submission.
 func (s *Store) DeleteSubmission(id int64) error {
-	_, err := s.db.Exec(`DELETE FROM submissions WHERE id = ?`, id)
-	return err
+	result, err := s.db.Exec(`DELETE FROM submissions WHERE id = ?`, id)
+	if err != nil {
+		return apperrors.Wrapf(err, "failed to delete submission %d", id)
+	}
+
+	// Check if any rows were affected
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return apperrors.Wrap(err, "failed to check rows affected")
+	}
+	if rowsAffected == 0 {
+		return apperrors.NotFoundError("submission", id)
+	}
+
+	return nil
 }
 
+// parseTime attempts to parse a timestamp string from SQLite.
+// It tries multiple formats: SQLite datetime format and RFC3339.
+// Returns zero time if parsing fails.
 func parseTime(value string) time.Time {
 	if value == "" {
 		return time.Time{}
 	}
+
+	// Try SQLite datetime format first (most common)
 	parsed, err := time.Parse("2006-01-02 15:04:05", value)
 	if err == nil {
 		return parsed
 	}
+
+	// Try RFC3339 format as fallback
 	parsed, err = time.Parse(time.RFC3339, value)
 	if err == nil {
 		return parsed
 	}
+
+	// Return zero time if all parsing attempts fail
 	return time.Time{}
 }
 
-func IsNotFound(err error) bool {
-	return errors.Is(err, sql.ErrNoRows)
-}
-
+// formatLimit ensures limit is within valid bounds for pagination.
+// Returns default page size (20) if limit is <= 0.
 func formatLimit(limit int) int {
+	const defaultPageSize = 20
 	if limit <= 0 {
-		return 20
+		return defaultPageSize
 	}
 	return limit
 }
 
+// formatOffset ensures offset is non-negative for pagination.
+// Returns 0 if offset is negative.
 func formatOffset(offset int) int {
 	if offset < 0 {
 		return 0
 	}
 	return offset
-}
-
-func (s *Store) ListSubmissionsSafe(offset, limit int) ([]store.Submission, int, error) {
-	limit = formatLimit(limit)
-	offset = formatOffset(offset)
-	return s.ListSubmissions(offset, limit)
-}
-
-func (s *Store) ListClientsSafe(offset, limit int) ([]store.Client, int, error) {
-	limit = formatLimit(limit)
-	offset = formatOffset(offset)
-	return s.ListClients(offset, limit)
-}
-
-func validateFormType(formType store.FormType) error {
-	switch formType {
-	case store.FormTypeSupport, store.FormTypeContact:
-		return nil
-	default:
-		return fmt.Errorf("invalid form type: %s", formType)
-	}
-}
-
-func (s *Store) CreateFormSafe(clientID int64, name string, formType store.FormType) (store.Form, error) {
-	if err := validateFormType(formType); err != nil {
-		return store.Form{}, err
-	}
-	return s.CreateForm(clientID, name, formType)
 }
