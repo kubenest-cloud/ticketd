@@ -332,6 +332,15 @@ log.Printf("Client created: %d", client.ID)  // Unstructured
 - Sanitize output in templates (Go templates auto-escape)
 - Check CORS origins (already implemented)
 
+**Authentication Security:**
+- Built-in HTTP Basic Auth is the default and recommended for most deployments
+- `TICKETD_DISABLE_AUTH` should ONLY be used when deploying behind trusted external auth proxies
+- When reviewing PRs that touch authentication code, ensure:
+  - The `DisableAuth` flag is properly checked before bypassing auth
+  - Security warnings are clear in documentation
+  - No credential validation is skipped unless explicitly configured
+  - Debug logs don't expose sensitive information
+
 ---
 
 ## Commit Message Guidelines
@@ -520,7 +529,9 @@ Test components working together:
 Test complete workflows:
 - Creating a client, form, and submission
 - CORS validation
-- Authentication flow
+- Authentication flow (both built-in and disabled modes)
+  - Test with `DisableAuth=false` (default behavior)
+  - Test with `DisableAuth=true` (external auth mode)
 
 ### Running Tests
 

@@ -14,15 +14,16 @@ import (
 type Config struct {
 	Port          string // Server port (default: 8080)
 	DBPath        string // SQLite database file path (default: ticketd.db)
-	AdminUser     string // Admin dashboard username (required)
-	AdminPass     string // Admin dashboard password (required)
+	AdminUser     string // Admin dashboard username (required unless DisableAuth is true)
+	AdminPass     string // Admin dashboard password (required unless DisableAuth is true)
 	PublicBaseURL string // Public base URL for embed scripts (optional, auto-detected if not set)
 	CustomCSSPath string // Path to custom CSS file for forms (optional)
+	DisableAuth   bool   // Disable built-in authentication (for use with external auth proxies like oauth2-proxy)
 }
 
 // Load reads configuration from environment variables.
 //
-// Required environment variables:
+// Required environment variables (unless TICKETD_DISABLE_AUTH=true):
 //   - TICKETD_ADMIN_USER: Username for admin dashboard
 //   - TICKETD_ADMIN_PASS: Password for admin dashboard
 //
@@ -31,6 +32,7 @@ type Config struct {
 //   - TICKETD_DB_PATH: Database file path (default: ticketd.db)
 //   - TICKETD_PUBLIC_BASE_URL: Public URL for production deployments
 //   - TICKETD_CUSTOM_CSS: Path to custom CSS file for embedded forms
+//   - TICKETD_DISABLE_AUTH: Set to "true" to disable built-in authentication (use with external auth proxies)
 func Load() Config {
 	cfg := Config{
 		Port:          envOrDefault("TICKETD_PORT", "8080"),
@@ -39,6 +41,7 @@ func Load() Config {
 		AdminPass:     os.Getenv("TICKETD_ADMIN_PASS"), // Don't trim password (whitespace might be intentional)
 		PublicBaseURL: strings.TrimSpace(os.Getenv("TICKETD_PUBLIC_BASE_URL")),
 		CustomCSSPath: strings.TrimSpace(os.Getenv("TICKETD_CUSTOM_CSS")),
+		DisableAuth:   strings.ToLower(strings.TrimSpace(os.Getenv("TICKETD_DISABLE_AUTH"))) == "true",
 	}
 	return cfg
 }
@@ -46,12 +49,14 @@ func Load() Config {
 // Validate checks that all required configuration is present and valid.
 // Returns a descriptive error if any validation fails.
 func (c Config) Validate() error {
-	// Check required fields
-	if c.AdminUser == "" {
-		return fmt.Errorf("TICKETD_ADMIN_USER is required")
-	}
-	if c.AdminPass == "" {
-		return fmt.Errorf("TICKETD_ADMIN_PASS is required")
+	// Check required fields (unless auth is disabled)
+	if !c.DisableAuth {
+		if c.AdminUser == "" {
+			return fmt.Errorf("TICKETD_ADMIN_USER is required (or set TICKETD_DISABLE_AUTH=true to use external authentication)")
+		}
+		if c.AdminPass == "" {
+			return fmt.Errorf("TICKETD_ADMIN_PASS is required (or set TICKETD_DISABLE_AUTH=true to use external authentication)")
+		}
 	}
 
 	// Validate port number
@@ -81,8 +86,12 @@ func (c Config) Validate() error {
 // String returns a string representation of the config with sensitive values redacted.
 // Useful for logging configuration at startup.
 func (c Config) String() string {
-	return fmt.Sprintf("Config{Port: %s, DBPath: %s, AdminUser: %s, AdminPass: *****, PublicBaseURL: %s, CustomCSSPath: %s}",
-		c.Port, c.DBPath, c.AdminUser, c.PublicBaseURL, c.CustomCSSPath)
+	authStatus := "enabled"
+	if c.DisableAuth {
+		authStatus = "disabled (using external auth)"
+	}
+	return fmt.Sprintf("Config{Port: %s, DBPath: %s, Auth: %s, PublicBaseURL: %s, CustomCSSPath: %s}",
+		c.Port, c.DBPath, authStatus, c.PublicBaseURL, c.CustomCSSPath)
 }
 
 // envOrDefault returns the value of an environment variable or a fallback default.

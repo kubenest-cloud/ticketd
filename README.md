@@ -156,6 +156,7 @@ TicketD is configured via environment variables or a `.env` file.
 | `TICKETD_DB_PATH` | `ticketd.db` | SQLite database file path |
 | `TICKETD_PUBLIC_BASE_URL` | Auto-detected | Public URL for embed scripts (recommended in production) |
 | `TICKETD_CUSTOM_CSS` | None | Path to custom CSS file for embedded forms |
+| `TICKETD_DISABLE_AUTH` | `false` | Disable built-in authentication (for external auth proxies) |
 
 ### Example `.env` File
 
@@ -305,11 +306,71 @@ ticketd/
 
 ### Security Features
 
-- ✅ **HTTP Basic Auth** for admin routes
+- ✅ **HTTP Basic Auth** for admin routes (or external auth proxy support)
 - ✅ **CORS validation** per client (domain whitelist)
 - ✅ **Parameterized SQL queries** (no SQL injection)
 - ✅ **Input validation** on all user inputs
 - ✅ **Auto-escaping** in Go templates (XSS protection)
+
+### Authentication Modes
+
+TicketD supports two authentication modes:
+
+#### 1. Built-in Authentication (Default)
+
+Uses HTTP Basic Authentication for the admin dashboard:
+
+```bash
+TICKETD_ADMIN_USER=admin
+TICKETD_ADMIN_PASS=your-secret-password
+```
+
+Simple and secure for most deployments. No external dependencies required.
+
+#### 2. External Authentication Proxy
+
+For advanced deployments, you can disable built-in auth and use an external authentication proxy:
+
+```bash
+TICKETD_DISABLE_AUTH=true
+```
+
+**Compatible with:**
+- [oauth2-proxy](https://github.com/oauth2-proxy/oauth2-proxy) - OAuth/OIDC proxy
+- [Authelia](https://www.authelia.com/) - Single sign-on
+- [Authentik](https://goauthentik.io/) - Identity provider
+- [Traefik ForwardAuth](https://doc.traefik.io/traefik/middlewares/http/forwardauth/) - Forward authentication
+- Any reverse proxy with authentication middleware
+
+**Example with oauth2-proxy:**
+
+```yaml
+# docker-compose.yml
+services:
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:latest
+    command:
+      - --http-address=0.0.0.0:4180
+      - --upstream=http://ticketd:8080
+      - --email-domain=yourcompany.com
+      - --provider=google
+    environment:
+      OAUTH2_PROXY_CLIENT_ID: your-client-id
+      OAUTH2_PROXY_CLIENT_SECRET: your-client-secret
+      OAUTH2_PROXY_COOKIE_SECRET: random-secret-here
+    ports:
+      - "4180:4180"
+
+  ticketd:
+    image: ticketd:latest
+    environment:
+      TICKETD_DISABLE_AUTH: "true"  # Disable built-in auth
+      TICKETD_DB_PATH: /data/ticketd.db
+    volumes:
+      - ./data:/data
+```
+
+**⚠️ Security Warning**: Only use `TICKETD_DISABLE_AUTH=true` when deploying behind a trusted authentication proxy. Never expose TicketD directly to the internet with authentication disabled.
 
 ---
 
