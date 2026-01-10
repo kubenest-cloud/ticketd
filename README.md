@@ -267,6 +267,30 @@ export default function ContactPage() {
 - The script will automatically find and use this container
 - If no container is specified, it falls back to inserting next to the script tag
 
+#### Troubleshooting CORS Issues
+
+If you see a "CORS Missing Allow Origin" or "forbidden domain" error:
+
+1. **Check the Client's Allowed Domain** in the admin dashboard:
+   - For `localhost` development: Set allowed domain to `localhost`
+   - For production: Use your domain without protocol (e.g., `example.com` or `mysite.com`)
+   - Subdomains are automatically allowed (e.g., `example.com` allows `www.example.com`, `app.example.com`)
+
+2. **Common Configurations**:
+   ```
+   Testing locally:           localhost
+   Production site:           example.com
+   Specific subdomain only:   app.example.com
+   ```
+
+3. **Enable Debug Logging** to see detailed CORS information:
+   ```bash
+   export TICKETD_DEBUG=1
+   ./ticketd
+   ```
+
+4. **Localhost Port Handling**: The system automatically strips ports from localhost URLs, so `localhost` will match `localhost:3000`, `localhost:5173`, etc.
+
 ### 5. Manage Submissions
 
 View and manage submissions in the admin dashboard:

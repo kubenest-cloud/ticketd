@@ -47,10 +47,26 @@ func (a *App) handleSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 	allowed, origin := a.checkAllowedOrigin(r)
 	if !allowed {
-		if debugEnabled() {
-			log.Printf("submit blocked form_id=%s origin=%q referer=%q", chi.URLParam(r, "formID"), r.Header.Get("Origin"), r.Header.Get("Referer"))
+		// Get more details for better error message
+		formID, _ := parseID(chi.URLParam(r, "formID"))
+		form, err := a.Store.GetForm(formID)
+		var allowedDomain string
+		if err == nil {
+			if client, err := a.Store.GetClient(form.ClientID); err == nil {
+				allowedDomain = client.AllowedDomain
+			}
 		}
-		writeJSON(w, http.StatusForbidden, map[string]string{"error": "forbidden domain"})
+
+		if debugEnabled() {
+			log.Printf("submit blocked form_id=%s origin=%q referer=%q allowed_domain=%q", chi.URLParam(r, "formID"), r.Header.Get("Origin"), r.Header.Get("Referer"), allowedDomain)
+		}
+
+		// Provide helpful error message in development
+		errorMsg := "forbidden domain"
+		if allowedDomain != "" {
+			errorMsg = fmt.Sprintf("domain not allowed - configure client allowed domain to match your site (currently set to: %s)", allowedDomain)
+		}
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": errorMsg})
 		return
 	}
 	if origin != "" {
@@ -164,12 +180,34 @@ func (a *App) checkAllowedOrigin(r *http.Request) (bool, string) {
 
 // domainAllowed checks if a host matches or is a subdomain of the allowed domain.
 // For example, if allowed is "example.com", it will match "example.com" and "www.example.com".
+// Special handling for localhost: "localhost" will match "localhost:3000", "localhost:8080", etc.
 func domainAllowed(host, allowed string) bool {
 	host = strings.ToLower(strings.TrimSpace(host))
 	allowed = strings.ToLower(strings.TrimSpace(allowed))
 	if host == "" || allowed == "" {
 		return false
 	}
+
+	// Strip port from localhost and 127.0.0.1 for easier development
+	// This allows "localhost" to match "localhost:3000", "localhost:5173", etc.
+	// Also allows "127.0.0.1" to match "127.0.0.1:3000", etc.
+	if strings.HasPrefix(host, "localhost:") {
+		host = "localhost"
+	}
+	if strings.HasPrefix(allowed, "localhost:") {
+		allowed = "localhost"
+	}
+	if strings.HasPrefix(host, "127.0.0.1:") {
+		host = "127.0.0.1"
+	}
+	if strings.HasPrefix(allowed, "127.0.0.1:") {
+		allowed = "127.0.0.1"
+	}
+	// Allow localhost and 127.0.0.1 to be interchangeable
+	if (host == "localhost" && allowed == "127.0.0.1") || (host == "127.0.0.1" && allowed == "localhost") {
+		return true
+	}
+
 	if host == allowed {
 		return true
 	}
