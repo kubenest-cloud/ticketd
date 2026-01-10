@@ -191,6 +191,31 @@ func (s *Store) UpdateClient(id int64, name, allowedDomain string) error {
 	return nil
 }
 
+// DeleteClient permanently deletes a client and all associated forms and submissions.
+func (s *Store) DeleteClient(id int64) error {
+	// Check if client exists
+	if _, err := s.GetClient(id); err != nil {
+		return err
+	}
+
+	// Delete all submissions for all forms of this client first
+	if _, err := s.db.Exec(`DELETE FROM submissions WHERE client_id = ?`, id); err != nil {
+		return apperrors.Wrapf(err, "failed to delete submissions for client %d", id)
+	}
+
+	// Delete all forms for this client
+	if _, err := s.db.Exec(`DELETE FROM forms WHERE client_id = ?`, id); err != nil {
+		return apperrors.Wrapf(err, "failed to delete forms for client %d", id)
+	}
+
+	// Delete the client
+	if _, err := s.db.Exec(`DELETE FROM clients WHERE id = ?`, id); err != nil {
+		return apperrors.Wrapf(err, "failed to delete client %d", id)
+	}
+
+	return nil
+}
+
 // CreateForm creates a new form after validating the input.
 func (s *Store) CreateForm(clientID int64, name string, formType store.FormType) (store.Form, error) {
 	// Validate input
@@ -256,6 +281,50 @@ func (s *Store) GetForm(id int64) (store.Form, error) {
 	}
 	form.CreatedAt = parseTime(created)
 	return form, nil
+}
+
+// UpdateForm updates an existing form's name and type.
+func (s *Store) UpdateForm(id int64, name string, formType store.FormType) error {
+	// Validate input
+	name = strings.TrimSpace(name)
+	if err := validator.ValidateForm(name, formType); err != nil {
+		return err
+	}
+
+	result, err := s.db.Exec(`UPDATE forms SET name = ?, type = ? WHERE id = ?`, name, string(formType), id)
+	if err != nil {
+		return apperrors.Wrapf(err, "failed to update form %d", id)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return apperrors.Wrap(err, "failed to check rows affected")
+	}
+	if rowsAffected == 0 {
+		return apperrors.NotFoundError("form", id)
+	}
+
+	return nil
+}
+
+// DeleteForm permanently deletes a form and all associated submissions.
+func (s *Store) DeleteForm(id int64) error {
+	// Check if form exists
+	if _, err := s.GetForm(id); err != nil {
+		return err
+	}
+
+	// Delete all submissions for this form first (foreign key constraint)
+	if _, err := s.db.Exec(`DELETE FROM submissions WHERE form_id = ?`, id); err != nil {
+		return apperrors.Wrapf(err, "failed to delete submissions for form %d", id)
+	}
+
+	// Delete the form
+	if _, err := s.db.Exec(`DELETE FROM forms WHERE id = ?`, id); err != nil {
+		return apperrors.Wrapf(err, "failed to delete form %d", id)
+	}
+
+	return nil
 }
 
 // CreateSubmission creates a new submission after validating the input.

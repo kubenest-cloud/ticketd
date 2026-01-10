@@ -91,6 +91,10 @@ type Store interface {
 	// Returns an error if the client doesn't exist or update fails.
 	UpdateClient(id int64, name, allowedDomain string) error
 
+	// DeleteClient permanently deletes a client and all associated forms and submissions.
+	// Returns an error if the client doesn't exist or deletion fails.
+	DeleteClient(id int64) error
+
 	// CreateForm creates a new form for the specified client.
 	// Returns the created form or an error if creation fails.
 	CreateForm(clientID int64, name string, formType FormType) (Form, error)
@@ -101,6 +105,14 @@ type Store interface {
 	// GetForm retrieves a form by ID.
 	// Returns ErrNotFound if the form doesn't exist.
 	GetForm(id int64) (Form, error)
+
+	// UpdateForm updates an existing form's name and type.
+	// Returns an error if the form doesn't exist or update fails.
+	UpdateForm(id int64, name string, formType FormType) error
+
+	// DeleteForm permanently deletes a form and all associated submissions.
+	// Returns an error if the form doesn't exist or deletion fails.
+	DeleteForm(id int64) error
 
 	// CreateSubmission creates a new submission for the specified form.
 	// Returns the created submission with denormalized client and form data.

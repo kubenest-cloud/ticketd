@@ -84,6 +84,7 @@
                 <th>Type</th>
                 <th>Embed link</th>
                 <th>Created</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -118,6 +119,21 @@
                 </td>
                 <td>
                   <time datetime="{{.CreatedAt}}">{{.CreatedAt}}</time>
+                </td>
+                <td>
+                  <div class="buttons are-small">
+                    <a href="/admin/clients/{{$.Client.ID}}/forms/{{.ID}}/edit" class="button is-light is-small" title="Edit form">
+                      <span>Edit</span>
+                    </a>
+                    <form method="post" action="/admin/clients/{{$.Client.ID}}/forms/{{.ID}}/delete" class="no-loading" style="display: inline;">
+                      <button
+                        class="button is-danger is-light is-small"
+                        type="submit"
+                        data-confirm="Are you sure you want to delete the form '{{.Name}}'? This will permanently delete all associated submissions. This action cannot be undone.">
+                        <span>Delete</span>
+                      </button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             {{end}}

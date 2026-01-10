@@ -105,6 +105,22 @@ func (a *App) handleAdminUpdateClient(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/admin/clients", http.StatusFound)
 }
 
+// handleAdminDeleteClient deletes a client and all associated forms and submissions.
+func (a *App) handleAdminDeleteClient(w http.ResponseWriter, r *http.Request) {
+	clientID, err := parseID(chi.URLParam(r, "clientID"))
+	if err != nil {
+		http.Error(w, "invalid client", http.StatusBadRequest)
+		return
+	}
+
+	if err := a.Store.DeleteClient(clientID); err != nil {
+		http.Error(w, "failed to delete client", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/admin/clients", http.StatusFound)
+}
+
 // clientView is a view model for rendering client information.
 // It includes a formatted timestamp for display in templates.
 type clientView struct {

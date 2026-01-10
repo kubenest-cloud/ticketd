@@ -83,8 +83,12 @@ func (a *App) Router() http.Handler {
 		admin.Post("/admin/clients", a.handleAdminCreateClient)
 		admin.Get("/admin/clients/{clientID}/edit", a.handleAdminEditClient)
 		admin.Post("/admin/clients/{clientID}/edit", a.handleAdminUpdateClient)
+		admin.Post("/admin/clients/{clientID}/delete", a.handleAdminDeleteClient)
 		admin.Get("/admin/clients/{clientID}/forms", a.handleAdminForms)
 		admin.Post("/admin/clients/{clientID}/forms", a.handleAdminCreateForm)
+		admin.Get("/admin/clients/{clientID}/forms/{formID}/edit", a.handleAdminEditFormPage)
+		admin.Post("/admin/clients/{clientID}/forms/{formID}/edit", a.handleAdminUpdateForm)
+		admin.Post("/admin/clients/{clientID}/forms/{formID}/delete", a.handleAdminDeleteForm)
 	})
 
 	return r

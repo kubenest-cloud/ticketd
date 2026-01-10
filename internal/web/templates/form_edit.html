@@ -1,0 +1,64 @@
+{{define "title"}}Edit Form | TicketD{{end}}
+{{define "content"}}
+<div class="columns is-multiline">
+  <div class="column is-12">
+    <div class="card ticketd-card">
+      <header class="card-header">
+        <p class="card-header-title">Edit Form</p>
+      </header>
+      <div class="card-content">
+        <form method="post" action="/admin/clients/{{.ClientID}}/forms/{{.Form.ID}}/edit" aria-labelledby="edit-form-title">
+          <h2 id="edit-form-title" class="is-sr-only">Edit form</h2>
+
+          <div class="field">
+            <label class="label" for="form_name">
+              Form name
+              <span class="has-text-danger" aria-label="required">*</span>
+            </label>
+            <div class="control">
+              <input
+                class="input"
+                id="form_name"
+                name="name"
+                value="{{.Form.Name}}"
+                required
+                aria-required="true"
+                aria-describedby="form-name-help">
+            </div>
+            <p class="help" id="form-name-help">A descriptive name for this form</p>
+          </div>
+
+          <div class="field">
+            <label class="label" for="form_type">
+              Form type
+              <span class="has-text-danger" aria-label="required">*</span>
+            </label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select id="form_type" name="type" aria-describedby="form-type-help">
+                  <option value="support" {{if eq .Form.Type "support"}}selected{{end}}>Support (with priority & subject)</option>
+                  <option value="contact" {{if eq .Form.Type "contact"}}selected{{end}}>Contact (basic)</option>
+                </select>
+              </div>
+            </div>
+            <p class="help" id="form-type-help">Choose the type of form fields to include</p>
+          </div>
+
+          <div class="field is-grouped">
+            <div class="control">
+              <button class="button is-primary" type="submit">
+                <span>Save changes</span>
+              </button>
+            </div>
+            <div class="control">
+              <a href="/admin/clients/{{.ClientID}}/forms" class="button is-light">
+                <span>Cancel</span>
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{{end}}
