@@ -64,7 +64,7 @@ func (a *App) Router() http.Handler {
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	r.Get("/form.css", a.handleFormCSS)
+	r.Get("/embed/form.css", a.handleFormCSS)
 	r.Get("/embed/{formID}.js", a.handleEmbedJS)
 	r.Options("/api/forms/{formID}/submit", a.handleSubmitOptions)
 	r.Post("/api/forms/{formID}/submit", a.handleSubmit)

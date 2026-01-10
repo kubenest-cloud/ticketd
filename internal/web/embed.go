@@ -16,7 +16,7 @@ import (
 //
 // The script can be embedded using a <script> tag: <script src="https://yourserver.com/embed/{formID}.js"></script>
 func buildEmbedJS(form store.Form, client store.Client, baseURL string) (string, error) {
-	cssURL := fmt.Sprintf("%s/form.css", baseURL)
+	cssURL := fmt.Sprintf("%s/embed/form.css", baseURL)
 	apiURL := fmt.Sprintf("%s/api/forms/%d/submit", baseURL, form.ID)
 	formTitle := fmt.Sprintf("%s - %s", client.Name, form.Name)
 
