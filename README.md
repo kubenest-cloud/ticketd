@@ -6,6 +6,9 @@
 
 <p align="center">
     <strong>Truly lightweight. No bullshit. Self-hosted contact/ticket system in Go.</strong>
+    <br />
+    <br />
+    <a href="buymeacoffee.com/kubenest"><img src="https://img.shields.io/badge/buy_me_a_coffee-yellow?logo=buymeacoffee&style=for-the-badge&logoColor=black&labelColor=lightblue&logoSize=auto" alt="Buy me a coffee!"></a>
 </p>
 
 <p align="center">
@@ -628,9 +631,6 @@ helped make TicketD better!
   [Open an issue](https://github.com/kubenest-cloud/ticketd/issues/new?template=bug_report.md)
 - 💡 **Have a feature request?**
   [Open an issue](https://github.com/kubenest-cloud/ticketd/issues/new?template=feature_request.md)
-- ❓ **Questions?**
-  [Start a discussion](https://github.com/kubenest-cloud/ticketd/discussions) _(if
-  enabled)_
 
 ---
 
@@ -641,7 +641,7 @@ If you find TicketD useful, please consider:
 - ⭐ **Starring** the repository
 - 🐦 **Sharing** on social media
 - 📝 **Writing** a blog post about your experience
-- 💸 **Sponsoring** the project _(if applicable)_
+- 💸 **Sponsoring** the project
 
 ---
 
