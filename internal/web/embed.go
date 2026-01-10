@@ -52,14 +52,22 @@ func buildEmbedJS(form store.Form, client store.Client, baseURL string) (string,
 	// Generate the self-contained JavaScript embed code
 	script := fmt.Sprintf(`(function(){
   var cfg = %s;
-  var scriptTag = document.currentScript;
   var mount = document.createElement("div");
   mount.className = "ticketd-embed";
-  if (scriptTag && scriptTag.parentNode) {
-    scriptTag.parentNode.insertBefore(mount, scriptTag);
+
+  // Try to find a container with data-ticketd-container attribute
+  var container = document.querySelector('[data-ticketd-container]');
+  if (container) {
+    container.appendChild(mount);
   } else {
-    document.body.appendChild(mount);
+    var scriptTag = document.currentScript;
+    if (scriptTag && scriptTag.parentNode) {
+      scriptTag.parentNode.insertBefore(mount, scriptTag);
+    } else {
+      document.body.appendChild(mount);
+    }
   }
+
   if (!document.querySelector('link[data-ticketd="true"]')) {
     var link = document.createElement("link");
     link.rel = "stylesheet";

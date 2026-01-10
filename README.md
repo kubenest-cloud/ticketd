@@ -216,6 +216,57 @@ Copy the generated embed code:
 
 Paste it anywhere on your website. The form will render automatically!
 
+#### Embedding in React/SPA Applications
+
+For React, Next.js, Vue, or other single-page applications, use the `data-ticketd-container` attribute to specify where the form should render:
+
+**React Example:**
+
+```jsx
+import { useEffect } from 'react';
+
+function ContactPage() {
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://tickets.example.com/embed/123.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  return (
+    <div>
+      <h1>Contact Us</h1>
+      <div data-ticketd-container></div>
+    </div>
+  );
+}
+```
+
+**Next.js Example:**
+
+```jsx
+import Script from 'next/script';
+
+export default function ContactPage() {
+  return (
+    <div>
+      <h1>Contact Us</h1>
+      <div data-ticketd-container></div>
+      <Script src="https://tickets.example.com/embed/123.js" />
+    </div>
+  );
+}
+```
+
+**Key Points:**
+- Add `data-ticketd-container` attribute to the element where you want the form
+- The script will automatically find and use this container
+- If no container is specified, it falls back to inserting next to the script tag
+
 ### 5. Manage Submissions
 
 View and manage submissions in the admin dashboard:
