@@ -8,7 +8,7 @@
     <strong>Truly lightweight. No bullshit. Self-hosted contact/ticket system in Go.</strong>
     <br />
     <br />
-    <a href="buymeacoffee.com/kubenest"><img src="https://img.shields.io/badge/buy_me_a_coffee-yellow?logo=buymeacoffee&style=for-the-badge&logoColor=black&labelColor=lightblue&logoSize=auto" alt="Buy me a coffee!"></a>
+    <a href="https://buymeacoffee.com/kubenest"><img src="https://img.shields.io/badge/buy_me_a_coffee-yellow?logo=buymeacoffee&style=for-the-badge&logoColor=black&labelColor=lightblue&logoSize=auto" alt="Buy me a coffee!"></a>
 </p>
 
 <p align="center">
