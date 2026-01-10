@@ -7,8 +7,10 @@ on:
     branches: [ main, develop ]
 
 permissions:
-  security-events: read
+  security-events: write
   actions: read
+  contents: read
+  id-token: write
 
 jobs:
   test:
