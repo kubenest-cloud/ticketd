@@ -6,3 +6,37 @@
 # TicketD
 ticketd.db
 .env
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
+
+# OS files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Compiled files
+*.class
+*.o
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# LLM cache
+.llm_cache/
+.claude
+
+# Git files
+.git/modules
+.gitconfig.local  

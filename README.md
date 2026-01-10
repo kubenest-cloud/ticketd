@@ -9,11 +9,11 @@
 </p>
 
 <p align="center">
-    <a href="https://github.com/OWNER/ticketd/releases"><img src="https://img.shields.io/github/v/release/OWNER/ticketd" alt="Release"></a>
-    <a href="https://github.com/OWNER/ticketd/blob/main/LICENSE"><img src="https://img.shields.io/github/license/OWNER/ticketd" alt="License"></a>
-    <a href="https://goreportcard.com/report/github.com/OWNER/ticketd"><img src="https://goreportcard.com/badge/github.com/OWNER/ticketd" alt="Go Report Card"></a>
-    <a href="https://github.com/OWNER/ticketd/actions"><img src="https://github.com/OWNER/ticketd/workflows/CI/badge.svg" alt="CI Status"></a>
-    <a href="https://pkg.go.dev/github.com/OWNER/ticketd"><img src="https://pkg.go.dev/badge/github.com/OWNER/ticketd.svg" alt="Go Reference"></a>
+    <a href="https://github.com/kubenest-cloud/ticketd/releases"><img src="https://img.shields.io/github/v/release/kubenest-cloud/ticketd" alt="Release"></a>
+    <a href="https://github.com/kubenest-cloud/ticketd/blob/main/LICENSE"><img src="https://img.shields.io/github/license/kubenest-cloud/ticketd" alt="License"></a>
+    <a href="https://goreportcard.com/report/github.com/kubenest-cloud/ticketd"><img src="https://goreportcard.com/badge/github.com/kubenest-cloud/ticketd" alt="Go Report Card"></a>
+    <a href="https://github.com/kubenest-cloud/ticketd/actions"><img src="https://github.com/kubenest-cloud/ticketd/workflows/CI/badge.svg" alt="CI Status"></a>
+    <a href="https://pkg.go.dev/github.com/kubenest-cloud/ticketd"><img src="https://pkg.go.dev/badge/github.com/kubenest-cloud/ticketd.svg" alt="Go Reference"></a>
 </p>
 
 <p align="center">
@@ -57,14 +57,14 @@
 
 ## 🎯 Why TicketD?
 
-| Aspect | TicketD | Cloud Services |
-|--------|---------|----------------|
-| **Cost** | $0 (only hosting) | $29-99/month |
-| **Setup** | 2 minutes | 30+ minutes |
-| **Data Privacy** | Your server | Third-party |
-| **Vendor Lock-in** | None | High |
-| **Customization** | Full control | Limited |
-| **Offline** | Works offline | Requires internet |
+| Aspect             | TicketD           | Cloud Services    |
+| ------------------ | ----------------- | ----------------- |
+| **Cost**           | $0 (only hosting) | $29-99/month      |
+| **Setup**          | 2 minutes         | 30+ minutes       |
+| **Data Privacy**   | Your server       | Third-party       |
+| **Vendor Lock-in** | None              | High              |
+| **Customization**  | Full control      | Limited           |
+| **Offline**        | Works offline     | Requires internet |
 
 ### Perfect For:
 
@@ -87,7 +87,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/OWNER/ticketd.git
+git clone https://github.com/kubenest-cloud/ticketd.git
 cd ticketd
 
 # Set credentials
@@ -107,7 +107,7 @@ Open `http://localhost:8080/admin` and start creating forms! 🎉
 ### Option 1: From Source
 
 ```bash
-git clone https://github.com/OWNER/ticketd.git
+git clone https://github.com/kubenest-cloud/ticketd.git
 cd ticketd
 go build -o ticketd
 ./ticketd
@@ -116,7 +116,7 @@ go build -o ticketd
 ### Option 2: Using Go Install
 
 ```bash
-go install github.com/OWNER/ticketd@latest
+go install github.com/kubenest-cloud/ticketd@latest
 ticketd
 ```
 
@@ -133,7 +133,8 @@ docker run -p 8080:8080 \
 
 ### Option 4: Download Binary
 
-Download pre-built binaries from the [releases page](https://github.com/OWNER/ticketd/releases).
+Download pre-built binaries from the
+[releases page](https://github.com/kubenest-cloud/ticketd/releases).
 
 ---
 
@@ -143,20 +144,20 @@ TicketD is configured via environment variables or a `.env` file.
 
 ### Required Variables
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `TICKETD_ADMIN_USER` | Admin dashboard username | `admin` |
+| Variable             | Description              | Example                |
+| -------------------- | ------------------------ | ---------------------- |
+| `TICKETD_ADMIN_USER` | Admin dashboard username | `admin`                |
 | `TICKETD_ADMIN_PASS` | Admin dashboard password | `your-secret-password` |
 
 ### Optional Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `TICKETD_PORT` | `8080` | HTTP server port |
-| `TICKETD_DB_PATH` | `ticketd.db` | SQLite database file path |
-| `TICKETD_PUBLIC_BASE_URL` | Auto-detected | Public URL for embed scripts (recommended in production) |
-| `TICKETD_CUSTOM_CSS` | None | Path to custom CSS file for embedded forms |
-| `TICKETD_DISABLE_AUTH` | `false` | Disable built-in authentication (for external auth proxies) |
+| Variable                  | Default       | Description                                                 |
+| ------------------------- | ------------- | ----------------------------------------------------------- |
+| `TICKETD_PORT`            | `8080`        | HTTP server port                                            |
+| `TICKETD_DB_PATH`         | `ticketd.db`  | SQLite database file path                                   |
+| `TICKETD_PUBLIC_BASE_URL` | Auto-detected | Public URL for embed scripts (recommended in production)    |
+| `TICKETD_CUSTOM_CSS`      | None          | Path to custom CSS file for embedded forms                  |
+| `TICKETD_DISABLE_AUTH`    | `false`       | Disable built-in authentication (for external auth proxies) |
 
 ### Example `.env` File
 
@@ -171,6 +172,7 @@ TICKETD_PUBLIC_BASE_URL=https://tickets.example.com
 ### Configuration Validation
 
 TicketD validates configuration on startup:
+
 - ✅ Required fields are present
 - ✅ Port number is valid (1-65535)
 - ✅ Custom CSS file exists (if specified)
@@ -186,17 +188,21 @@ Navigate to `http://localhost:8080/admin` and log in with your credentials.
 
 ### 2. Create a Client
 
-A **client** represents a website or product. Each client has an **allowed domain** for CORS protection.
+A **client** represents a website or product. Each client has an **allowed domain** for
+CORS protection.
 
 **Example:**
+
 - **Name**: My Awesome App
-- **Allowed Domain**: `example.com` (accepts submissions from `example.com` and `*.example.com`)
+- **Allowed Domain**: `example.com` (accepts submissions from `example.com` and
+  `*.example.com`)
 
 ### 3. Create a Form
 
 After creating a client, create a **form**:
 
 **Form Types:**
+
 - **Support**: Includes priority and subject fields
 - **Contact**: Basic name, email, and message fields
 
@@ -213,6 +219,7 @@ Paste it anywhere on your website. The form will render automatically!
 ### 5. Manage Submissions
 
 View and manage submissions in the admin dashboard:
+
 - 📥 See all incoming tickets
 - 🏷️ Update status (OPEN → IN PROGRESS → CLOSED)
 - 🗑️ Delete spam or test submissions
@@ -235,6 +242,7 @@ Collect user feedback without paying for expensive SaaS tools.
 ### 2. Multi-Client Ticketing
 
 Perfect for agencies managing multiple client websites:
+
 - Each client has its own forms and allowed domains
 - Centralized admin dashboard
 - All data in one place
@@ -242,6 +250,7 @@ Perfect for agencies managing multiple client websites:
 ### 3. Internal Team Support
 
 Create an internal support form for your team:
+
 - Lightweight alternative to Jira/Zendesk for small teams
 - Self-hosted, no per-user pricing
 - Full control over data
@@ -249,6 +258,7 @@ Create an internal support form for your team:
 ### 4. Event Registration
 
 Use contact forms for event registrations:
+
 - Hackathons
 - Workshops
 - Beta signups
@@ -329,17 +339,20 @@ Simple and secure for most deployments. No external dependencies required.
 
 #### 2. External Authentication Proxy
 
-For advanced deployments, you can disable built-in auth and use an external authentication proxy:
+For advanced deployments, you can disable built-in auth and use an external authentication
+proxy:
 
 ```bash
 TICKETD_DISABLE_AUTH=true
 ```
 
 **Compatible with:**
+
 - [oauth2-proxy](https://github.com/oauth2-proxy/oauth2-proxy) - OAuth/OIDC proxy
 - [Authelia](https://www.authelia.com/) - Single sign-on
 - [Authentik](https://goauthentik.io/) - Identity provider
-- [Traefik ForwardAuth](https://doc.traefik.io/traefik/middlewares/http/forwardauth/) - Forward authentication
+- [Traefik ForwardAuth](https://doc.traefik.io/traefik/middlewares/http/forwardauth/) -
+  Forward authentication
 - Any reverse proxy with authentication middleware
 
 **Example with oauth2-proxy:**
@@ -364,13 +377,15 @@ services:
   ticketd:
     image: ticketd:latest
     environment:
-      TICKETD_DISABLE_AUTH: "true"  # Disable built-in auth
+      TICKETD_DISABLE_AUTH: "true" # Disable built-in auth
       TICKETD_DB_PATH: /data/ticketd.db
     volumes:
       - ./data:/data
 ```
 
-**⚠️ Security Warning**: Only use `TICKETD_DISABLE_AUTH=true` when deploying behind a trusted authentication proxy. Never expose TicketD directly to the internet with authentication disabled.
+**⚠️ Security Warning**: Only use `TICKETD_DISABLE_AUTH=true` when deploying behind a
+trusted authentication proxy. Never expose TicketD directly to the internet with
+authentication disabled.
 
 ---
 
@@ -380,7 +395,7 @@ services:
 
 ```bash
 # Clone and install
-git clone https://github.com/OWNER/ticketd.git
+git clone https://github.com/kubenest-cloud/ticketd.git
 cd ticketd
 go mod download
 
@@ -471,20 +486,20 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for deta
 
 ### Good First Issues
 
-Look for issues labeled [`good first issue`](https://github.com/OWNER/ticketd/labels/good%20first%20issue) - perfect for new contributors!
+Look for issues labeled
+[`good first issue`](https://github.com/kubenest-cloud/ticketd/labels/good%20first%20issue) -
+perfect for new contributors!
 
 ---
 
 ## 📝 License
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for
+details.
 
 ### What This Means
 
-✅ **Commercial use**
-✅ **Modification**
-✅ **Distribution**
-✅ **Private use**
+✅ **Commercial use** ✅ **Modification** ✅ **Distribution** ✅ **Private use**
 
 ⚠️ **No warranty or liability**
 
@@ -502,46 +517,56 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ### Inspired By
 
-TicketD was built out of frustration with expensive, bloated ticketing systems for simple use cases.
+TicketD was built out of frustration with expensive, bloated ticketing systems for simple
+use cases.
 
 ### Contributors
 
-Thanks to all [contributors](https://github.com/OWNER/ticketd/graphs/contributors) who have helped make TicketD better!
+Thanks to all
+[contributors](https://github.com/kubenest-cloud/ticketd/graphs/contributors) who have
+helped make TicketD better!
 
 ---
 
 ## 📊 Project Stats
 
-![GitHub stars](https://img.shields.io/github/stars/OWNER/ticketd?style=social)
-![GitHub forks](https://img.shields.io/github/forks/OWNER/ticketd?style=social)
-![GitHub watchers](https://img.shields.io/github/watchers/OWNER/ticketd?style=social)
+![GitHub stars](https://img.shields.io/github/stars/kubenest-cloud/ticketd?style=social)
+![GitHub forks](https://img.shields.io/github/forks/kubenest-cloud/ticketd?style=social)
+![GitHub watchers](https://img.shields.io/github/watchers/kubenest-cloud/ticketd?style=social)
 
 ---
 
 ## 🔗 Links
 
-- **Documentation**: [GitHub Wiki](https://github.com/OWNER/ticketd/wiki) *(coming soon)*
-- **Issue Tracker**: [GitHub Issues](https://github.com/OWNER/ticketd/issues)
-- **Changelog**: [CHANGELOG.md](CHANGELOG.md) *(coming soon)*
-- **Roadmap**: [GitHub Projects](https://github.com/OWNER/ticketd/projects) *(coming soon)*
+- **Documentation**: [GitHub Wiki](https://github.com/kubenest-cloud/ticketd/wiki)
+  _(coming soon)_
+- **Issue Tracker**: [GitHub Issues](https://github.com/kubenest-cloud/ticketd/issues)
+- **Changelog**: [CHANGELOG.md](CHANGELOG.md) _(coming soon)_
+- **Roadmap**: [GitHub Projects](https://github.com/kubenest-cloud/ticketd/projects)
+  _(coming soon)_
 
 ---
 
 ## 💬 Support
 
-- 🐛 **Found a bug?** [Open an issue](https://github.com/OWNER/ticketd/issues/new?template=bug_report.md)
-- 💡 **Have a feature request?** [Open an issue](https://github.com/OWNER/ticketd/issues/new?template=feature_request.md)
-- ❓ **Questions?** [Start a discussion](https://github.com/OWNER/ticketd/discussions) *(if enabled)*
+- 🐛 **Found a bug?**
+  [Open an issue](https://github.com/kubenest-cloud/ticketd/issues/new?template=bug_report.md)
+- 💡 **Have a feature request?**
+  [Open an issue](https://github.com/kubenest-cloud/ticketd/issues/new?template=feature_request.md)
+- ❓ **Questions?**
+  [Start a discussion](https://github.com/kubenest-cloud/ticketd/discussions) _(if
+  enabled)_
 
 ---
 
 ## 🌟 Show Your Support
 
 If you find TicketD useful, please consider:
+
 - ⭐ **Starring** the repository
 - 🐦 **Sharing** on social media
 - 📝 **Writing** a blog post about your experience
-- 💸 **Sponsoring** the project *(if applicable)*
+- 💸 **Sponsoring** the project _(if applicable)_
 
 ---
 
