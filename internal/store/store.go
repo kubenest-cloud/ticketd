@@ -18,10 +18,10 @@ type Client struct {
 type FormType string
 
 const (
-	// FormTypeSupport represents a support form with subject and priority fields.
+	// FormTypeSupport represents a support form with name, email, subject, message, and priority fields.
 	FormTypeSupport FormType = "support"
 
-	// FormTypeContact represents a basic contact form.
+	// FormTypeContact represents a contact form with name, email, subject, and message fields.
 	FormTypeContact FormType = "contact"
 )
 
@@ -110,6 +110,11 @@ type Store interface {
 	// Results include denormalized client and form names for display.
 	// offset specifies how many records to skip, limit specifies max records to return.
 	ListSubmissions(offset, limit int) ([]Submission, int, error)
+
+	// FilterSubmissions returns a filtered paginated list of submissions and the total count.
+	// Filters can be applied by status, client ID, form ID, and subject search.
+	// Empty/zero values for filters are ignored (no filtering applied for that field).
+	FilterSubmissions(offset, limit int, status string, clientID, formID int64, subjectSearch string) ([]Submission, int, error)
 
 	// GetSubmission retrieves a submission by ID with denormalized client and form data.
 	// Returns ErrNotFound if the submission doesn't exist.

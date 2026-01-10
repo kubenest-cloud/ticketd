@@ -203,8 +203,8 @@ After creating a client, create a **form**:
 
 **Form Types:**
 
-- **Support**: Includes priority and subject fields
-- **Contact**: Basic name, email, and message fields
+- **Support**: Includes name, email, subject, message, and priority fields
+- **Contact**: Includes name, email, subject, and message fields
 
 ### 4. Embed the Form
 

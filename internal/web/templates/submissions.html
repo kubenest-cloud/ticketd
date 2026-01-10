@@ -6,9 +6,149 @@
       <header class="card-header">
         <p class="card-header-title">Incoming tickets</p>
         <div class="card-header-icon">
+          {{if .HasFilters}}
+            <span class="tag is-info is-light mr-2">{{.ResultsCount}} filtered</span>
+          {{end}}
           <span class="tag is-light">{{.Total}} total</span>
         </div>
       </header>
+
+      <!-- Filter Panel -->
+      <div class="card-content" style="padding-bottom: 0.75rem;">
+        <form method="get" action="/admin/submissions" id="filter-form">
+          <div class="columns is-multiline is-mobile">
+            <!-- Search by Subject -->
+            <div class="column is-12-mobile is-4-tablet is-3-desktop">
+              <div class="field">
+                <label class="label is-small" for="search">Search Subject</label>
+                <div class="control has-icons-left">
+                  <input
+                    class="input is-small"
+                    type="text"
+                    id="search"
+                    name="search"
+                    placeholder="Search by subject..."
+                    value="{{.FilterSearch}}">
+                  <span class="icon is-small is-left">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Filter by Status -->
+            <div class="column is-6-mobile is-4-tablet is-2-desktop">
+              <div class="field">
+                <label class="label is-small" for="status">Status</label>
+                <div class="control">
+                  <div class="select is-small is-fullwidth">
+                    <select id="status" name="status" onchange="document.getElementById('filter-form').submit()">
+                      <option value="">All statuses</option>
+                      <option value="OPEN" {{if eq .FilterStatus "OPEN"}}selected{{end}}>Open</option>
+                      <option value="IN_PROGRESS" {{if eq .FilterStatus "IN_PROGRESS"}}selected{{end}}>In Progress</option>
+                      <option value="CLOSED" {{if eq .FilterStatus "CLOSED"}}selected{{end}}>Closed</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Filter by Client -->
+            <div class="column is-6-mobile is-4-tablet is-3-desktop">
+              <div class="field">
+                <label class="label is-small" for="client">Client</label>
+                <div class="control">
+                  <div class="select is-small is-fullwidth">
+                    <select id="client" name="client" onchange="document.getElementById('filter-form').submit()">
+                      <option value="">All clients</option>
+                      {{range .Clients}}
+                        <option value="{{.ID}}" {{if eq $.FilterClient .ID}}selected{{end}}>{{.Name}}</option>
+                      {{end}}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Filter by Form -->
+            <div class="column is-6-mobile is-4-tablet is-3-desktop">
+              <div class="field">
+                <label class="label is-small" for="form">Form</label>
+                <div class="control">
+                  <div class="select is-small is-fullwidth">
+                    <select id="form" name="form" onchange="document.getElementById('filter-form').submit()">
+                      <option value="">All forms</option>
+                      {{range .Forms}}
+                        <option value="{{.ID}}" {{if eq $.FilterForm .ID}}selected{{end}}>{{.Name}}</option>
+                      {{end}}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="column is-6-mobile is-12-tablet is-1-desktop">
+              <div class="field">
+                <label class="label is-small" style="visibility: hidden;">Actions</label>
+                <div class="buttons">
+                  <button class="button is-small is-link is-light" type="submit">
+                    <span>Apply</span>
+                  </button>
+                  {{if .HasFilters}}
+                    <a href="/admin/submissions" class="button is-small is-light" title="Clear filters">
+                      <span>Clear</span>
+                    </a>
+                  {{end}}
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        {{if .HasFilters}}
+          <div class="notification is-info is-light" style="margin-top: 0.5rem; padding: 0.75rem 1rem;">
+            <div class="level is-mobile">
+              <div class="level-left">
+                <div class="level-item">
+                  <div class="tags has-addons are-small">
+                    <span class="tag">Active filters:</span>
+                    {{if .FilterSearch}}
+                      <span class="tag is-info">Search: "{{.FilterSearch}}"</span>
+                    {{end}}
+                    {{if .FilterStatus}}
+                      <span class="tag is-info">Status: {{.FilterStatus}}</span>
+                    {{end}}
+                    {{if .FilterClient}}
+                      {{range .Clients}}
+                        {{if eq $.FilterClient .ID}}
+                          <span class="tag is-info">Client: {{.Name}}</span>
+                        {{end}}
+                      {{end}}
+                    {{end}}
+                    {{if .FilterForm}}
+                      {{range .Forms}}
+                        {{if eq $.FilterForm .ID}}
+                          <span class="tag is-info">Form: {{.Name}}</span>
+                        {{end}}
+                      {{end}}
+                    {{end}}
+                  </div>
+                </div>
+              </div>
+              <div class="level-right">
+                <div class="level-item">
+                  <strong>{{.ResultsCount}}</strong>&nbsp;result{{if ne .ResultsCount 1}}s{{end}}
+                </div>
+              </div>
+            </div>
+          </div>
+        {{end}}
+      </div>
+
       <div class="card-content">
         <div class="table-container">
           <table class="table is-fullwidth is-striped is-hoverable ticketd-table">
@@ -70,12 +210,12 @@
   <div class="column is-12">
     <nav class="pagination is-centered" role="navigation" aria-label="pagination">
       {{if .PrevPage}}
-      <a class="pagination-previous" href="/admin/submissions?page={{.PrevPage}}">Previous</a>
+      <a class="pagination-previous" href="/admin/submissions?page={{.PrevPage}}{{if .FilterStatus}}&status={{.FilterStatus}}{{end}}{{if .FilterClient}}&client={{.FilterClient}}{{end}}{{if .FilterForm}}&form={{.FilterForm}}{{end}}{{if .FilterSearch}}&search={{.FilterSearch}}{{end}}">Previous</a>
       {{else}}
       <a class="pagination-previous" disabled>Previous</a>
       {{end}}
       {{if .NextPage}}
-      <a class="pagination-next" href="/admin/submissions?page={{.NextPage}}">Next</a>
+      <a class="pagination-next" href="/admin/submissions?page={{.NextPage}}{{if .FilterStatus}}&status={{.FilterStatus}}{{end}}{{if .FilterClient}}&client={{.FilterClient}}{{end}}{{if .FilterForm}}&form={{.FilterForm}}{{end}}{{if .FilterSearch}}&search={{.FilterSearch}}{{end}}">Next</a>
       {{else}}
       <a class="pagination-next" disabled>Next</a>
       {{end}}

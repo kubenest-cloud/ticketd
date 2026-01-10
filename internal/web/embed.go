@@ -24,9 +24,9 @@ func buildEmbedJS(form store.Form, client store.Client, baseURL string) (string,
 	fields := []map[string]any{
 		{"label": "Name", "name": "name", "type": "text"},
 		{"label": "Email", "name": "email", "type": "email"},
+		{"label": "Subject", "name": "subject", "type": "text"},
 	}
 	if form.Type == store.FormTypeSupport {
-		fields = append(fields, map[string]any{"label": "Subject", "name": "subject", "type": "text"})
 		fields = append(fields, map[string]any{
 			"label":   "Priority",
 			"name":    "priority",

@@ -215,27 +215,36 @@ func domainAllowed(host, allowed string) bool {
 }
 
 // validateSubmission validates form submission input based on the form type.
-// Support forms require subject and priority, contact forms require name and email.
+// All forms require name, email, subject, and message.
+// Support forms additionally require priority.
 // Basic email format validation is performed if email is provided.
 func validateSubmission(formType store.FormType, input *store.SubmissionInput) error {
+	// All form types require these fields
+	if input.Name == "" {
+		return fmt.Errorf("name is required")
+	}
+	if input.Email == "" {
+		return fmt.Errorf("email is required")
+	}
+	if input.Subject == "" {
+		return fmt.Errorf("subject is required")
+	}
 	if input.Message == "" {
 		return fmt.Errorf("message is required")
 	}
+
+	// Additional validation based on form type
 	switch formType {
 	case store.FormTypeSupport:
-		if input.Subject == "" {
-			return fmt.Errorf("subject is required")
-		}
 		if input.Priority == "" {
 			input.Priority = "medium"
 		}
 	case store.FormTypeContact:
-		if input.Name == "" || input.Email == "" {
-			return fmt.Errorf("name and email are required")
-		}
+		// Contact forms already validated above
 	default:
 		return fmt.Errorf("invalid form type")
 	}
+
 	if input.Email != "" && !strings.Contains(input.Email, "@") {
 		return fmt.Errorf("invalid email")
 	}

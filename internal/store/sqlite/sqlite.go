@@ -4,6 +4,7 @@ package sqlite
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 	"time"
 
@@ -324,6 +325,81 @@ LIMIT ? OFFSET ?
 
 	if err := rows.Err(); err != nil {
 		return nil, 0, apperrors.Wrap(err, "error iterating submission rows")
+	}
+
+	return submissions, total, nil
+}
+
+// FilterSubmissions returns a filtered paginated list of submissions.
+// Filters are applied dynamically based on provided parameters.
+// Empty/zero values are ignored (no filtering for that field).
+func (s *Store) FilterSubmissions(offset, limit int, status string, clientID, formID int64, subjectSearch string) ([]store.Submission, int, error) {
+	// Build dynamic WHERE clause
+	var conditions []string
+	var args []interface{}
+
+	if status != "" {
+		conditions = append(conditions, "s.status = ?")
+		args = append(args, status)
+	}
+	if clientID > 0 {
+		conditions = append(conditions, "s.client_id = ?")
+		args = append(args, clientID)
+	}
+	if formID > 0 {
+		conditions = append(conditions, "s.form_id = ?")
+		args = append(args, formID)
+	}
+	if subjectSearch != "" {
+		conditions = append(conditions, "s.subject LIKE ?")
+		args = append(args, "%"+subjectSearch+"%")
+	}
+
+	whereClause := ""
+	if len(conditions) > 0 {
+		whereClause = "WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	// Count total filtered results
+	countQuery := fmt.Sprintf(`SELECT COUNT(*) FROM submissions s %s`, whereClause)
+	var total int
+	if err := s.db.QueryRow(countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, apperrors.Wrap(err, "failed to count filtered submissions")
+	}
+
+	// Get filtered submissions
+	query := fmt.Sprintf(`
+SELECT s.id, s.client_id, c.name, s.form_id, f.name, f.type, s.status, s.name, s.email, s.subject, s.message, s.priority, s.ip, s.user_agent, s.created_at
+FROM submissions s
+JOIN clients c ON c.id = s.client_id
+JOIN forms f ON f.id = s.form_id
+%s
+ORDER BY s.created_at DESC
+LIMIT ? OFFSET ?
+`, whereClause)
+
+	// Append limit and offset to args
+	queryArgs := append(args, limit, offset)
+
+	rows, err := s.db.Query(query, queryArgs...)
+	if err != nil {
+		return nil, 0, apperrors.Wrap(err, "failed to filter submissions")
+	}
+	defer rows.Close()
+
+	submissions := []store.Submission{}
+	for rows.Next() {
+		var submission store.Submission
+		var created string
+		if err := rows.Scan(&submission.ID, &submission.ClientID, &submission.Client, &submission.FormID, &submission.Form, &submission.FormType, &submission.Status, &submission.Name, &submission.Email, &submission.Subject, &submission.Message, &submission.Priority, &submission.IP, &submission.UserAgent, &created); err != nil {
+			return nil, 0, apperrors.Wrap(err, "failed to scan filtered submission row")
+		}
+		submission.CreatedAt = parseTime(created)
+		submissions = append(submissions, submission)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, apperrors.Wrap(err, "error iterating filtered submission rows")
 	}
 
 	return submissions, total, nil

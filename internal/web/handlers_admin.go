@@ -10,14 +10,31 @@ import (
 	"ticketd/internal/store"
 )
 
-// handleAdminSubmissions displays a paginated list of all form submissions.
-// It supports pagination with a default page size of 20 submissions per page.
+// handleAdminSubmissions displays a paginated, filterable list of form submissions.
+// Supports filtering by status, client, form, and subject search.
 // Submissions without a status are defaulted to "OPEN".
 func (a *App) handleAdminSubmissions(w http.ResponseWriter, r *http.Request) {
 	page := parsePage(r)
 	offset := (page - 1) * pageSize
 
-	subs, total, err := a.Store.ListSubmissions(offset, pageSize)
+	// Parse filter parameters
+	status := r.URL.Query().Get("status")
+	clientID, _ := parseID(r.URL.Query().Get("client"))
+	formID, _ := parseID(r.URL.Query().Get("form"))
+	subjectSearch := strings.TrimSpace(r.URL.Query().Get("search"))
+
+	// Use filtering if any filters are provided
+	var subs []store.Submission
+	var total int
+	var err error
+
+	hasFilters := status != "" || clientID > 0 || formID > 0 || subjectSearch != ""
+	if hasFilters {
+		subs, total, err = a.Store.FilterSubmissions(offset, pageSize, status, clientID, formID, subjectSearch)
+	} else {
+		subs, total, err = a.Store.ListSubmissions(offset, pageSize)
+	}
+
 	if err != nil {
 		http.Error(w, "failed to load submissions", http.StatusInternalServerError)
 		return
@@ -35,14 +52,30 @@ func (a *App) handleAdminSubmissions(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	// Get clients and forms for filter dropdowns
+	clients, _, _ := a.Store.ListClients(0, 1000) // Get all clients
+	allForms := []store.Form{}
+	for _, client := range clients {
+		forms, _ := a.Store.ListForms(client.ID)
+		allForms = append(allForms, forms...)
+	}
+
 	data := submissionsPage{
-		Active:      "submissions",
-		Submissions: items,
-		Page:        page,
-		Total:       total,
-		TotalPages:  totalPages(total),
-		PrevPage:    prevPage(page),
-		NextPage:    nextPage(page, total),
+		Active:        "submissions",
+		Submissions:   items,
+		Page:          page,
+		Total:         total,
+		TotalPages:    totalPages(total),
+		PrevPage:      prevPage(page),
+		NextPage:      nextPage(page, total),
+		Clients:       clients,
+		Forms:         allForms,
+		FilterStatus:  status,
+		FilterClient:  clientID,
+		FilterForm:    formID,
+		FilterSearch:  subjectSearch,
+		HasFilters:    hasFilters,
+		ResultsCount:  len(subs),
 	}
 
 	a.renderTemplate(w, r, "submissions.html", data)
@@ -116,7 +149,7 @@ func (a *App) handleAdminDeleteSubmission(w http.ResponseWriter, r *http.Request
 // Note: The validator package uses IN_PROGRESS (with underscore), not "IN PROGRESS".
 func isValidStatus(status string) bool {
 	switch status {
-	case "OPEN", "IN PROGRESS", "CLOSED":
+	case "OPEN", "IN_PROGRESS", "CLOSED":
 		return true
 	default:
 		return false
@@ -132,15 +165,23 @@ type submissionView struct {
 }
 
 // submissionsPage is the data structure for the submissions list page.
-// It includes pagination information and the list of submissions.
+// It includes pagination information, filter options, and the list of submissions.
 type submissionsPage struct {
-	Active      string
-	Submissions []submissionView
-	Page        int
-	Total       int
-	TotalPages  int
-	PrevPage    int
-	NextPage    int
+	Active        string
+	Submissions   []submissionView
+	Page          int
+	Total         int
+	TotalPages    int
+	PrevPage      int
+	NextPage      int
+	Clients       []store.Client
+	Forms         []store.Form
+	FilterStatus  string
+	FilterClient  int64
+	FilterForm    int64
+	FilterSearch  string
+	HasFilters    bool
+	ResultsCount  int
 }
 
 // submissionPage is the data structure for the single submission detail page.
