@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+permissions:
+  security-events: read
+
 jobs:
   test:
     name: Test
