@@ -221,17 +221,18 @@ Paste it anywhere on your website. The form will render automatically!
 
 #### Embedding in React/SPA Applications
 
-For React, Next.js, Vue, or other single-page applications, use the `data-ticketd-container` attribute to specify where the form should render:
+For React, Next.js, Vue, or other single-page applications, use the
+`data-ticketd-container` attribute to specify where the form should render:
 
 **React Example:**
 
 ```jsx
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
 function ContactPage() {
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://tickets.example.com/embed/123.js';
+    const script = document.createElement("script");
+    script.src = "https://tickets.example.com/embed/123.js";
     script.async = true;
     document.body.appendChild(script);
 
@@ -252,7 +253,7 @@ function ContactPage() {
 **Next.js Example:**
 
 ```jsx
-import Script from 'next/script';
+import Script from "next/script";
 
 export default function ContactPage() {
   return (
@@ -266,6 +267,7 @@ export default function ContactPage() {
 ```
 
 **Key Points:**
+
 - Add `data-ticketd-container` attribute to the element where you want the form
 - The script will automatically find and use this container
 - If no container is specified, it falls back to inserting next to the script tag
@@ -275,11 +277,15 @@ export default function ContactPage() {
 If you see a "CORS Missing Allow Origin" or "forbidden domain" error:
 
 1. **Check the Client's Allowed Domain** in the admin dashboard:
+
    - For `localhost` development: Set allowed domain to `localhost`
-   - For production: Use your domain without protocol (e.g., `example.com` or `mysite.com`)
-   - Subdomains are automatically allowed (e.g., `example.com` allows `www.example.com`, `app.example.com`)
+   - For production: Use your domain without protocol (e.g., `example.com` or
+     `mysite.com`)
+   - Subdomains are automatically allowed (e.g., `example.com` allows `www.example.com`,
+     `app.example.com`)
 
 2. **Common Configurations**:
+
    ```
    Testing locally:           localhost
    Production site:           example.com
@@ -287,12 +293,14 @@ If you see a "CORS Missing Allow Origin" or "forbidden domain" error:
    ```
 
 3. **Enable Debug Logging** to see detailed CORS information:
+
    ```bash
    export TICKETD_DEBUG=1
    ./ticketd
    ```
 
-4. **Localhost Port Handling**: The system automatically strips ports from localhost URLs, so `localhost` will match `localhost:3000`, `localhost:5173`, etc.
+4. **Localhost Port Handling**: The system automatically strips ports from localhost URLs,
+   so `localhost` will match `localhost:3000`, `localhost:5173`, etc.
 
 ### 5. Manage Submissions
 
@@ -567,6 +575,50 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for deta
 Look for issues labeled
 [`good first issue`](https://github.com/kubenest-cloud/ticketd/labels/good%20first%20issue) -
 perfect for new contributors!
+
+---
+
+## 🌟 Who's Using TicketD?
+
+TicketD is trusted by teams and projects around the world:
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" width="200">
+        <a href="https://quiztify.com" target="_blank">
+          <img src="https://quiztify.com/icon.svg" width="80" alt="Quiztify"/>
+          <br />
+          <strong>Quiztify</strong>
+        </a>
+        <br />
+        <span>AI-powered quiz platform</span>
+      </td>
+      <td align="center" width="200">
+        <a href="https://mimus.ai" target="_blank">
+          <img src="https://mimus.ai/logo.png" width="80" alt="Mimus AI"/>
+          <br />
+          <strong>Mimus AI</strong>
+        </a>
+        <br />
+        <span>Content Moderation</span>
+      </td>
+      <td align="center" width="200">
+        <a href="https://kubenest.com" target="_blank">
+          <img src="https://kubenest-public-assets.s3.eu-central-1.amazonaws.com/kubenest-logo.png" width="80" alt="Kubenest"/>
+          <br />
+          <strong>Kubenest</strong>
+        </a>
+        <br />
+        <span>Cloud infrastructure</span>
+      </td>
+    </tr>
+  </table>
+</div>
+
+**Using TicketD?**
+[Let us know!](https://github.com/kubenest-cloud/ticketd/issues/new?title=Add%20[Company]%20to%20Who's%20Using%20TicketD)
+We'd love to feature your project.
 
 ---
 
